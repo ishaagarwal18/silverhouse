@@ -8,11 +8,11 @@ export default function MegaMenu({ onSelectCategory, onSelectSubcategory, onClos
   const activeCategory = CATEGORIES.find(c => c.id === activeTab) || CATEGORIES[0];
 
   return (
-    <div 
+    <div
       className="absolute top-full left-0 w-full bg-white border-b border-silver-200 shadow-2xl z-50 transition-all duration-300 animate-in fade-in slide-in-from-top-2"
       onMouseLeave={onClose}
     >
-      <div className="max-w-7xl mx-auto flex min-h-[380px]">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 flex min-h-[380px]">
         {/* Left Vertical Categories List */}
         <div className="w-1/4 border-r border-silver-100 bg-[#FAFAFA] py-4">
           <p className="px-6 py-2 text-[10px] font-bold tracking-widest text-silver-500 uppercase">
@@ -29,11 +29,10 @@ export default function MegaMenu({ onSelectCategory, onSelectSubcategory, onClos
                       onSelectCategory(cat.id);
                       onClose();
                     }}
-                    className={`w-full px-6 py-3 text-left font-medium text-sm flex items-center justify-between transition-all ${
-                      isActive 
-                        ? 'bg-white text-[#1A1A1A] font-semibold border-l-4 border-[#D4AF37] shadow-xs' 
-                        : 'text-silver-700 hover:text-[#1A1A1A] hover:bg-silver-100/50'
-                    }`}
+                    className={`w-full px-6 py-3 text-left font-medium text-sm flex items-center justify-between transition-all ${isActive
+                      ? 'bg-white text-[#1A1A1A] font-semibold border-l-4 border-[#D4AF37] shadow-xs'
+                      : 'text-silver-700 hover:text-[#1A1A1A] hover:bg-silver-100/50'
+                      }`}
                   >
                     <span>{cat.name}</span>
                     <ChevronRight className={`w-4 h-4 transition-transform ${isActive ? 'text-[#D4AF37] translate-x-1' : 'text-silver-400'}`} />
@@ -100,8 +99,8 @@ export default function MegaMenu({ onSelectCategory, onSelectSubcategory, onClos
 
           {/* Featured Visual Spotlight Card */}
           <div className="w-72 bg-silver-50 rounded-xl overflow-hidden border border-silver-200 flex flex-col justify-between relative group">
-            <img 
-              src={activeCategory.heroBanner} 
+            <img
+              src={activeCategory.heroBanner}
               alt={activeCategory.name}
               className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
             />

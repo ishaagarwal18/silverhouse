@@ -5,7 +5,7 @@ export default function Footer({ onNavigateCategory, onNavigateYatraCustomizer }
   return (
     <footer className="bg-[#1A1A1A] text-white pt-16 pb-8 border-t-2 border-[#D4AF37]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Top Newsletter Bar */}
         <div className="p-8 rounded-2xl bg-linear-to-r from-white/5 via-white/10 to-white/5 border border-white/10 mb-16 flex flex-col lg:flex-row items-center justify-between gap-6">
           <div className="max-w-xl">
@@ -39,7 +39,7 @@ export default function Footer({ onNavigateCategory, onNavigateYatraCustomizer }
 
         {/* Main Footer Columns */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-silver-800 text-xs">
-          
+
           {/* Col 1: Brand Info */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center space-x-3">
@@ -47,7 +47,7 @@ export default function Footer({ onNavigateCategory, onNavigateYatraCustomizer }
                 <Sparkles className="w-5 h-5 text-[#1A1A1A]" />
               </div>
               <span className="font-serif text-2xl font-bold tracking-tight text-white">
-                VEDA<span className="text-gold-gradient font-light">SILVYA</span>
+                SILVER<span className="text-gold-gradient font-light">HOUSE</span>
               </span>
             </div>
 
@@ -58,7 +58,7 @@ export default function Footer({ onNavigateCategory, onNavigateYatraCustomizer }
             <div className="space-y-2 text-silver-400">
               <div className="flex items-center space-x-2">
                 <MapPin className="w-4 h-4 text-[#D4AF37]" />
-                <span>VedaSilvya Heritage Tower, Connaught Place, New Delhi 110001</span>
+                <span>SILVERHOUSE Heritage Tower, Connaught Place, New Delhi 110001</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Phone className="w-4 h-4 text-[#D4AF37]" />
@@ -144,7 +144,7 @@ export default function Footer({ onNavigateCategory, onNavigateYatraCustomizer }
 
         {/* Bottom Copyright */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] text-silver-400 gap-4">
-          <p>© 2026 VedaSilvya Fine Artifacts Pvt. Ltd. All Rights Reserved.</p>
+          <p>© 2026 SILVERHOUSE Fine Artifacts Pvt. Ltd. All Rights Reserved.</p>
           <div className="flex items-center space-x-6">
             <a href="#privacy" className="hover:text-white">Privacy Policy</a>
             <a href="#terms" className="hover:text-white">Terms of Service</a>
