@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
+  --font-cormorant: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+
+  --color-silver-50: #F8F9FA;
+  --color-silver-100: #E9ECEF;
+  --color-silver-200: #E5E4E2; /* Platinum */
+  --color-silver-300: #CED4DA;
+  --color-silver-400: #C0C0C0; /* Royal Silver */
+  --color-silver-500: #999999;
+  --color-silver-600: #666666;
+  --color-silver-700: #333333;
+  --color-silver-800: #1A1A1A; /* Obsidian */
+
+  --color-gold-300: #F3E5AB;
+  --color-gold-400: #E6CA65;
+  --color-gold-500: #D4AF37; /* Sacred Gold */
+  --color-gold-600: #AA820A;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    color: var(--color-silver-800);
+    scroll-behavior: smooth;
+  }
+
+  h1, h2, h3, .font-serif-heading {
+    font-family: var(--font-serif);
+  }
+}
+
+/* Custom Metallic & Luxury Utility Classes */
+.bg-silver-gradient {
+  background: linear-gradient(135deg, #F5F5F7 0%, #E2E2E6 50%, #D8D8DE 100%);
+}
+
+.bg-silver-metallic {
+  background: linear-gradient(135deg, #E5E4E2 0%, #FFFFFF 25%, #C0C0C0 50%, #E5E4E2 75%, #A8A8A8 100%);
+  background-size: 200% 200%;
+  animation: silverShimmer 6s ease infinite;
+}
+
+.bg-gold-metallic {
+  background: linear-gradient(135deg, #DFBA49 0%, #FFF3B3 30%, #D4AF37 70%, #997A15 100%);
+}
+
+.text-gold-gradient {
+  background: linear-gradient(135deg, #D4AF37 0%, #F5D77F 50%, #B8860B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-silver-gradient {
+  background: linear-gradient(135deg, #4A4A4A 0%, #8A8A8A 50%, #1A1A1A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-glow {
+  box-shadow: 0 4px 20px -2px rgba(212, 175, 55, 0.25);
+}
+
+.silver-card-shadow {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.07), 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.silver-card-hover {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.silver-card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px -15px rgba(26, 26, 26, 0.12), 0 0 2px rgba(212, 175, 55, 0.3);
+}
+
+@keyframes silverShimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F1F1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C0C0C0;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #D4AF37;
+}
