@@ -11,7 +11,7 @@ export default function Footer({ onNavigateCategory, onNavigateYatraCustomizer }
           <div className="max-w-xl">
             <div className="flex items-center space-x-2 text-[#D4AF37] mb-1">
               <Sparkles className="w-4 h-4" />
-              <span className="text-xs font-bold uppercase tracking-wider">JOIN VEDASILVYA INNER CIRCLE</span>
+              <span className="text-xs font-bold uppercase tracking-wider">JOIN SILVERHOUSE INNER CIRCLE</span>
             </div>
             <h3 className="font-serif text-2xl font-bold text-silver-50">
               Receive Festival Offers & Daily Silver Rate Updates
@@ -66,7 +66,7 @@ export default function Footer({ onNavigateCategory, onNavigateYatraCustomizer }
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="w-4 h-4 text-[#D4AF37]" />
-                <span>Support: care@vedasilvya.com</span>
+                <span>Support: care@silverhouse.com</span>
               </div>
             </div>
           </div>
