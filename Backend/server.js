@@ -219,6 +219,17 @@ const postProductHandler = async (req, res) => {
                 return res.status(400).json({ status: "ERROR", error: `Missing required fields for product_id: ${product_id || 'unknown'}` });
             }
 
+            // Verify category_id exists in category table
+            const checkCat = await pool.request()
+                .input("category_id", sql.Int, category_id)
+                .query("SELECT category_id FROM category WHERE category_id = @category_id");
+            if (checkCat.recordset.length === 0) {
+                return res.status(400).json({
+                    status: "ERROR",
+                    error: `Category ID ${category_id} does not exist in database. Please insert category ${category_id} first!`
+                });
+            }
+
             // Verify m_id exists in make_master table
             let validMId = null;
             if (m_id) {
@@ -311,6 +322,43 @@ app.post("/api/images", async (req, res) => {
         res.status(500).json({ status: "ERROR", error: err.message });
     }
 });
+
+
+
+const deleteproduct = async (req, res) => {
+    try {
+        const { product_id } = req.params;
+        const pool = await poolPromise;
+        await pool.request()
+            .input('product_id', sql.Int, product_id)
+            .query(`
+    DELETE FROM product WHERE product_id=@product_id
+    `)
+        res.status(200).json({ status: "OK", message: 'Product deleted successfully' })
+    } catch (err) {
+        console.error('Error deleting product:', err);
+        res.status(500).json({ status: "ERROR", error: 'Failed to delete product', details: err.message })
+    }
+}
+app.delete('/api/products/delete/:product_id', deleteproduct);
+
+const deletecategories = async (req, res) => {
+    try {
+        const { category_id } = req.params;
+        const pool = await poolPromise;
+        await pool.request()
+            .input('category_id', sql.Int, category_id)
+            .query(`
+    DELETE FROM category WHERE category_id=@category_id
+    `)
+        res.status(200).json({ status: "OK", message: 'Category deleted successfully' })
+    } catch (err) {
+        console.error('Error deleting category:', err);
+        res.status(500).json({ status: "ERROR", error: 'Failed to delete category', details: err.message })
+    }
+}
+app.delete('/api/categories/delete/:category_id', deletecategories);
+
 
 app.listen(PORT, () => {
     console.log(`[Server] Running on http://localhost:${PORT}`);

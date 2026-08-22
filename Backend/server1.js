@@ -227,7 +227,28 @@ const postImageHandler = async (req, res) => {
 app.post('/api/images', postImageHandler);
 app.post('/api/send/images', postImageHandler);
 
+
+const deleteproduct = async (req, res) => {
+  try {
+    const { product_id } = req.params;
+    const pool = await poolPromise;
+    await pool.request()
+      .input('product_id', sql.Int, product_id)
+      .query(`
+    DELETE FROM product WHERE product_id=@product_id
+    `)
+    res.status(200).json({ message: 'Product deleted successfully' })
+  } catch (err) {
+    console.error('Error deleting product:', err);
+    res.status(500).json({ error: 'Failed to delete product', details: err.message })
+  }
+}
+app.delete('/api/products/delete/:product_id', deleteproduct);
+// app.delete('/api/send/products/:product_id', deleteproduct);
+
 // Start Server
 app.listen(PORT, () => {
   console.log(`[Server] SilverHouse API server running on http://localhost:${PORT}`);
 });
+
+
