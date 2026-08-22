@@ -32,7 +32,7 @@ export default function CategoryGrid({ onSelectCategory }) {
               <img
                 src={category.heroBanner}
                 alt={category.name}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 brightness-75 group-hover:brightness-60"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
               />
 
               {/* Gradient Overlay */}
