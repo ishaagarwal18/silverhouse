@@ -55,7 +55,6 @@ BEGIN
             @LabourCost  = TRY_CAST(JSON_VALUE(@Payload, '$.table_values.labour_cost') AS DECIMAL(18,2)),
             @ActualCost  = TRY_CAST(JSON_VALUE(@Payload, '$.table_values.actual_cost') AS DECIMAL(18,2));
 
-        -- Support fallback for "name" key in JSON
         IF @Title IS NULL OR @Title = ''
             SET @Title = LTRIM(RTRIM(JSON_VALUE(@Payload, '$.table_values.name')));
     END
