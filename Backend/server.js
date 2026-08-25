@@ -44,7 +44,6 @@ const getCategoriesHandler = async (req, res) => {
     }
 };
 app.get("/api/categories", getCategoriesHandler);
-app.get("/api/send/categories", getCategoriesHandler);
 
 // GET Make Master
 app.get("/api/make-master", async (req, res) => {
@@ -91,7 +90,6 @@ const getProductsHandler = async (req, res) => {
     }
 };
 app.get("/api/products", getProductsHandler);
-app.get("/api/send/products", getProductsHandler);
 
 // GET Single Product by ID
 app.get("/api/products/:id", async (req, res) => {
@@ -168,10 +166,9 @@ const postCategoryHandler = async (req, res) => {
     }
 };
 app.post("/api/send/categories", postCategoryHandler);
-app.post("/api/categories", postCategoryHandler);
 
 // POST Make Master
-app.post("/api/make-master", async (req, res) => {
+const postMakeMasterHandler = async (req, res) => {
     try {
         const { m_id, type } = req.body;
         if (!m_id || !type) {
@@ -191,7 +188,8 @@ app.post("/api/make-master", async (req, res) => {
     } catch (err) {
         res.status(500).json({ status: "ERROR", error: err.message });
     }
-});
+};
+app.post("/api/send/make-master", postMakeMasterHandler);
 
 // POST Product (Supports single object OR array of objects)
 const postProductHandler = async (req, res) => {
@@ -291,10 +289,9 @@ const postProductHandler = async (req, res) => {
     }
 };
 app.post("/api/send/products", postProductHandler);
-app.post("/api/products", postProductHandler);
 
 // POST Image & Link to Product
-app.post("/api/images", async (req, res) => {
+const postImagesHandler = async (req, res) => {
     try {
         const { image_id, product_id, image_url } = req.body;
         if (!image_id || !image_url) {
@@ -321,8 +318,8 @@ app.post("/api/images", async (req, res) => {
     } catch (err) {
         res.status(500).json({ status: "ERROR", error: err.message });
     }
-});
-
+};
+app.post("/api/send/images", postImagesHandler);
 
 
 const deleteproduct = async (req, res) => {
@@ -358,6 +355,23 @@ const deletecategories = async (req, res) => {
     }
 }
 app.delete('/api/categories/delete/:category_id', deletecategories);
+
+const deleteimages = async (req, res) => {
+    try {
+        const { image_id } = req.params;
+        const pool = await poolPromise;
+        await pool.request()
+            .input('image_id', sql.Int, image_id)
+            .query(`
+    DELETE FROM image WHERE image_id=@image_id
+    `)
+        res.status(200).json({ status: "OK", message: 'Image deleted successfully' })
+    } catch (err) {
+        console.error('Error deleting image:', err);
+        res.status(500).json({ status: "ERROR", error: 'Failed to delete image', details: err.message })
+    }
+}
+app.delete('/api/images/delete/:image_id', deleteimages);
 
 
 app.listen(PORT, () => {

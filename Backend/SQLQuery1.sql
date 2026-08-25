@@ -19,7 +19,7 @@ GO
 CREATE TABLE product (
     product_id INT PRIMARY KEY,
     category_id INT NOT NULL,
-    m_id INT,                                    -- Linked to make_master (Optional)
+    m_id INT,                                 
     purity VARCHAR(30) NOT NULL,
     weight VARCHAR(30) NOT NULL,
     title VARCHAR(50) NOT NULL,
