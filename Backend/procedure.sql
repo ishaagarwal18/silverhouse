@@ -1,7 +1,7 @@
 USE SilverHouse;
 GO
 
--- 1. DROP EXISTING PROCEDURES IF ANY (Prevents Msg 208 error)
+-- 1. DROP EXISTING PROCEDURES
 IF OBJECT_ID('dbo.SP_GETDATA', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_GETDATA;
 IF OBJECT_ID('dbo.SP_product', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_product;
 IF OBJECT_ID('dbo.SP_category', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_category;
@@ -13,8 +13,8 @@ GO
 -- =========================================================================
 CREATE PROCEDURE dbo.SP_product
     @Opr       NVARCHAR(10),
-    @Payload   NVARCHAR(MAX) = NULL,
-    @Condition NVARCHAR(255) = NULL
+    @JSONstr   NVARCHAR(MAX) = NULL,
+    @Condition NVARCHAR(MAX) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -22,7 +22,6 @@ BEGIN
     DECLARE @TargetId INT = TRY_CAST(@Condition AS INT);
     DECLARE @NewProductId INT;
     
-    -- Variables exactly matching schema
     DECLARE @CategoryId INT;
     DECLARE @MakeId INT;
     DECLARE @Purity VARCHAR(30);
@@ -38,28 +37,28 @@ BEGIN
     DECLARE @ActualCost DECIMAL(18,2);
 
     -- Extract JSON fields
-    IF @Payload IS NOT NULL AND ISJSON(@Payload) > 0
+    IF @JSONstr IS NOT NULL AND ISJSON(@JSONstr) > 0
     BEGIN
         SELECT
-            @CategoryId  = TRY_CAST(JSON_VALUE(@Payload, '$.table_values.category_id') AS INT),
-            @MakeId      = TRY_CAST(JSON_VALUE(@Payload, '$.table_values.m_id') AS INT),
-            @Purity      = LTRIM(RTRIM(JSON_VALUE(@Payload, '$.table_values.purity'))),
-            @Weight      = LTRIM(RTRIM(JSON_VALUE(@Payload, '$.table_values.weight'))),
-            @Title       = LTRIM(RTRIM(JSON_VALUE(@Payload, '$.table_values.title'))),
-            @Description = LTRIM(RTRIM(JSON_VALUE(@Payload, '$.table_values.description'))),
-            @Price       = TRY_CAST(JSON_VALUE(@Payload, '$.table_values.price') AS DECIMAL(18,2)),
-            @Discount    = TRY_CAST(JSON_VALUE(@Payload, '$.table_values.discount') AS DECIMAL(4,2)),
-            @Quantity    = TRY_CAST(JSON_VALUE(@Payload, '$.table_values.quantity') AS INT),
-            @IdealFor    = LTRIM(RTRIM(JSON_VALUE(@Payload, '$.table_values.ideal_for'))),
-            @Packaging   = LTRIM(RTRIM(JSON_VALUE(@Payload, '$.table_values.packaging'))),
-            @LabourCost  = TRY_CAST(JSON_VALUE(@Payload, '$.table_values.labour_cost') AS DECIMAL(18,2)),
-            @ActualCost  = TRY_CAST(JSON_VALUE(@Payload, '$.table_values.actual_cost') AS DECIMAL(18,2));
+            @CategoryId  = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.category_id') AS INT),
+            @MakeId      = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.m_id') AS INT),
+            @Purity      = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.purity'))),
+            @Weight      = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.weight'))),
+            @Title       = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.title'))),
+            @Description = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.description'))),
+            @Price       = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.price') AS DECIMAL(18,2)),
+            @Discount    = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.discount') AS DECIMAL(4,2)),
+            @Quantity    = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.quantity') AS INT),
+            @IdealFor    = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.ideal_for'))),
+            @Packaging   = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.packaging'))),
+            @LabourCost  = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.labour_cost') AS DECIMAL(18,2)),
+            @ActualCost  = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.actual_cost') AS DECIMAL(18,2));
 
         IF @Title IS NULL OR @Title = ''
-            SET @Title = LTRIM(RTRIM(JSON_VALUE(@Payload, '$.table_values.name')));
+            SET @Title = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.name')));
     END
 
-    -- Check record existence for EDIT / DELETE
+    -- Existence Check for EDIT / DELETE
     IF @Opr IN ('EDIT', 'DELETE')
     BEGIN
         IF NOT EXISTS (SELECT 1 FROM dbo.product WHERE product_id = @TargetId)
@@ -69,9 +68,7 @@ BEGIN
         END
     END
 
-    -- -------------------------------------------------------------
     -- CRUD ROUTING
-    -- -------------------------------------------------------------
     IF @Opr = 'SELECT'
     BEGIN
         IF @TargetId IS NOT NULL AND @TargetId > 0
@@ -82,7 +79,6 @@ BEGIN
 
     ELSE IF @Opr = 'ADD'
     BEGIN
-        -- NOT NULL Validations
         IF @CategoryId IS NULL
         BEGIN
             RAISERROR('Validation Error: category_id is required.', 16, 1);
@@ -139,7 +135,6 @@ BEGIN
             RETURN;
         END
 
-        -- Calculate next product_id
         SELECT @NewProductId = ISNULL(MAX(product_id), 0) + 1 FROM dbo.product;
 
         INSERT INTO dbo.product (
@@ -170,19 +165,19 @@ BEGIN
         END
 
         UPDATE dbo.product
-        SET category_id = ISNULL(@CategoryId, category_id),
-            m_id        = CASE WHEN @MakeId IS NOT NULL THEN @MakeId ELSE m_id END,
-            purity      = ISNULL(@Purity, purity),
-            [weight]    = ISNULL(@Weight, [weight]),
-            title       = ISNULL(@Title, title),
+        SET category_id  = ISNULL(@CategoryId, category_id),
+            m_id         = CASE WHEN @MakeId IS NOT NULL THEN @MakeId ELSE m_id END,
+            purity       = ISNULL(@Purity, purity),
+            [weight]     = ISNULL(@Weight, [weight]),
+            title        = ISNULL(@Title, title),
             [description]= ISNULL(@Description, [description]),
-            price       = ISNULL(@Price, price),
-            discount    = CASE WHEN @Discount IS NOT NULL THEN @Discount ELSE discount END,
-            quantity    = ISNULL(@Quantity, quantity),
-            ideal_for   = ISNULL(@IdealFor, ideal_for),
-            packaging   = CASE WHEN @Packaging IS NOT NULL THEN @Packaging ELSE packaging END,
-            labour_cost = CASE WHEN @LabourCost IS NOT NULL THEN @LabourCost ELSE labour_cost END,
-            actual_cost = ISNULL(@ActualCost, actual_cost)
+            price        = ISNULL(@Price, price),
+            discount     = CASE WHEN @Discount IS NOT NULL THEN @Discount ELSE discount END,
+            quantity     = ISNULL(@Quantity, quantity),
+            ideal_for    = ISNULL(@IdealFor, ideal_for),
+            packaging    = CASE WHEN @Packaging IS NOT NULL THEN @Packaging ELSE packaging END,
+            labour_cost  = CASE WHEN @LabourCost IS NOT NULL THEN @LabourCost ELSE labour_cost END,
+            actual_cost  = ISNULL(@ActualCost, actual_cost)
         WHERE product_id = @TargetId;
 
         SELECT @TargetId AS ProductId, 'Product updated successfully' AS [Message];
@@ -192,7 +187,7 @@ BEGIN
     BEGIN
         IF EXISTS (SELECT 1 FROM dbo.product_image WHERE product_id = @TargetId)
         BEGIN
-            RAISERROR('Constraint Error: Cannot delete product because it is linked in dbo.product_image.', 16, 1);
+            RAISERROR('Constraint Error: Cannot delete product because images are linked to it in dbo.product_image.', 16, 1);
             RETURN;
         END
 
@@ -207,8 +202,8 @@ GO
 -- =========================================================================
 CREATE PROCEDURE dbo.SP_category
     @Opr       NVARCHAR(10),
-    @Payload   NVARCHAR(MAX) = NULL,
-    @Condition NVARCHAR(255) = NULL
+    @JSONstr   NVARCHAR(MAX) = NULL,
+    @Condition NVARCHAR(MAX) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -221,16 +216,16 @@ BEGIN
     DECLARE @IdealFor VARCHAR(20);
 
     -- Extract JSON fields
-    IF @Payload IS NOT NULL AND ISJSON(@Payload) > 0
+    IF @JSONstr IS NOT NULL AND ISJSON(@JSONstr) > 0
     BEGIN
         SELECT
-            @Name        = LTRIM(RTRIM(JSON_VALUE(@Payload, '$.table_values.name'))),
-            @Description = LTRIM(RTRIM(JSON_VALUE(@Payload, '$.table_values.description'))),
-            @Slug        = LTRIM(RTRIM(JSON_VALUE(@Payload, '$.table_values.slug'))),
-            @IdealFor    = LTRIM(RTRIM(JSON_VALUE(@Payload, '$.table_values.ideal_for')));
+            @Name        = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.name'))),
+            @Description = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.description'))),
+            @Slug        = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.slug'))),
+            @IdealFor    = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.ideal_for')));
     END
 
-    -- Check record existence for EDIT / DELETE
+    -- Existence Check for EDIT / DELETE
     IF @Opr IN ('EDIT', 'DELETE')
     BEGIN
         IF NOT EXISTS (SELECT 1 FROM dbo.category WHERE category_id = @TargetId)
@@ -240,9 +235,7 @@ BEGIN
         END
     END
 
-    -- -------------------------------------------------------------
     -- CRUD ROUTING
-    -- -------------------------------------------------------------
     IF @Opr = 'SELECT'
     BEGIN
         IF @TargetId IS NOT NULL AND @TargetId > 0
@@ -278,7 +271,6 @@ BEGIN
             RETURN;
         END
 
-        -- Calculate next category_id
         SELECT @NewCategoryId = ISNULL(MAX(category_id), 0) + 1 FROM dbo.category;
 
         INSERT INTO dbo.category (category_id, [name], [description], slug, ideal_for)
@@ -329,8 +321,8 @@ GO
 -- =========================================================================
 CREATE PROCEDURE dbo.SP_image
     @Opr       NVARCHAR(10),
-    @Payload   NVARCHAR(MAX) = NULL,
-    @Condition NVARCHAR(255) = NULL
+    @JSONstr   NVARCHAR(MAX) = NULL,
+    @Condition NVARCHAR(MAX) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -340,13 +332,13 @@ BEGIN
     DECLARE @NewImageId INT;
 
     -- Extract JSON fields
-    IF @Payload IS NOT NULL AND ISJSON(@Payload) > 0
+    IF @JSONstr IS NOT NULL AND ISJSON(@JSONstr) > 0
     BEGIN
         SELECT
-            @ImageUrl = LTRIM(RTRIM(JSON_VALUE(@Payload, '$.table_values.image_url')));
+            @ImageUrl = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.image_url')));
     END
 
-    -- Check record existence for EDIT / DELETE
+    -- Existence Check for EDIT / DELETE
     IF @Opr IN ('EDIT', 'DELETE')
     BEGIN
         IF NOT EXISTS (SELECT 1 FROM dbo.[image] WHERE image_id = @TargetId)
@@ -356,9 +348,7 @@ BEGIN
         END
     END
 
-    -- -------------------------------------------------------------
     -- CRUD ROUTING
-    -- -------------------------------------------------------------
     IF @Opr = 'SELECT'
     BEGIN
         IF @TargetId IS NOT NULL AND @TargetId > 0
@@ -378,7 +368,6 @@ BEGIN
             RETURN;
         END
 
-        -- Calculate next image_id
         SELECT @NewImageId = ISNULL(MAX(image_id), 0) + 1 FROM dbo.[image];
 
         INSERT INTO dbo.[image] (image_id, image_url)
@@ -417,67 +406,94 @@ END;
 GO
 
 -- =========================================================================
--- PROCEDURE 4: SP_GETDATA (Dispatcher)
+-- PROCEDURE 4: SP_GETDATA (Dispatcher with Point 5 TRY...CATCH)
 -- =========================================================================
-CREATE PROCEDURE dbo.SP_GETDATA
-    @TableName   NVARCHAR(50),
-    @Opr         NVARCHAR(10),
-    @Payload     NVARCHAR(MAX) = NULL,
-    @Condition   NVARCHAR(255) = NULL
+USE SilverHouse;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.SP_GETDATA
+    @proc_name   NVARCHAR(50),          -- Target entity/table
+    @Opr         NVARCHAR(10),          -- 'ADD', 'EDIT', 'DELETE', 'SELECT'
+    @JSONstr     NVARCHAR(MAX) = NULL,  -- JSON formatted string
+    @Condition   NVARCHAR(255) = NULL   -- Primary Key / ID
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    SET @TableName = LOWER(LTRIM(RTRIM(@TableName)));
+    -- Internal response variable
+    DECLARE @Response NVARCHAR(MAX) = 'OK';
+
+    -- Normalize inputs
+    SET @proc_name = LOWER(LTRIM(RTRIM(@proc_name)));
     SET @Opr = UPPER(LTRIM(RTRIM(@Opr)));
 
-    IF @TableName IS NULL OR @TableName = ''
+    -- 1. Procedure/Table Name Validation
+    IF @proc_name IS NULL OR @proc_name = ''
     BEGIN
-        RAISERROR('Validation Error: Table name cannot be empty.', 16, 1);
+        SET @Response = 'ERROR: proc_name cannot be empty.';
+        SELECT @Response AS [Response_Status];
         RETURN;
     END
 
-    IF @TableName NOT IN ('product', 'category', 'image')
+    IF @proc_name NOT IN ('product', 'category', 'image')
     BEGIN
-        RAISERROR('Security Error: Unauthorized or unsupported table name "%s".', 16, 1, @TableName);
+        SET @Response = 'SECURITY ERROR: Unauthorized or unsupported proc_name "' + @proc_name + '".';
+        SELECT @Response AS [Response_Status];
         RETURN;
     END
 
-    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @TableName)
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @proc_name)
     BEGIN
-        RAISERROR('Database Error: Target table "%s" does not exist in schema.', 16, 1, @TableName);
+        SET @Response = 'DATABASE ERROR: Target table "' + @proc_name + '" does not exist in schema.';
+        SELECT @Response AS [Response_Status];
         RETURN;
     END
 
+    -- 2. Operation Validation
     IF @Opr NOT IN ('ADD', 'EDIT', 'DELETE', 'SELECT')
     BEGIN
-        RAISERROR('Validation Error: Invalid operation "%s". Allowed: ADD, EDIT, DELETE, SELECT.', 16, 1, @Opr);
+        SET @Response = 'VALIDATION ERROR: Invalid operation "' + @Opr + '". Allowed: ADD, EDIT, DELETE, SELECT.';
+        SELECT @Response AS [Response_Status];
         RETURN;
     END
 
+    -- 3. JSON Payload Validation
     IF @Opr IN ('ADD', 'EDIT')
     BEGIN
-        IF @Payload IS NULL OR ISJSON(@Payload) = 0
+        IF @JSONstr IS NULL OR ISJSON(@JSONstr) = 0
         BEGIN
-            RAISERROR('Validation Error: A valid JSON payload is required for ADD/EDIT operations.', 16, 1);
+            SET @Response = 'VALIDATION ERROR: A valid JSON payload (JSONstr) is required for ADD/EDIT operations.';
+            SELECT @Response AS [Response_Status];
             RETURN;
         END
     END
 
+    -- 4. Condition / ID Validation
     IF @Opr IN ('EDIT', 'DELETE')
     BEGIN
         IF @Condition IS NULL OR TRY_CAST(@Condition AS INT) IS NULL OR CAST(@Condition AS INT) <= 0
         BEGIN
-            RAISERROR('Validation Error: A valid positive integer ID/Condition is required for %s operations.', 16, 1, @Opr);
+            SET @Response = 'VALIDATION ERROR: A valid positive integer ID/Condition is required for ' + @Opr + ' operations.';
+            SELECT @Response AS [Response_Status];
             RETURN;
         END
     END
 
-    IF @TableName = 'product'
-        EXEC dbo.SP_product @Opr = @Opr, @Payload = @Payload, @Condition = @Condition;
-    ELSE IF @TableName = 'category'
-        EXEC dbo.SP_category @Opr = @Opr, @Payload = @Payload, @Condition = @Condition;
-    ELSE IF @TableName = 'image'
-        EXEC dbo.SP_image @Opr = @Opr, @Payload = @Payload, @Condition = @Condition;
+    -- 5. Execution of Target Stored Procedure inside TRY...CATCH
+    BEGIN TRY
+        IF @proc_name = 'product'
+            EXEC dbo.SP_product @Opr = @Opr, @JSONstr = @JSONstr, @Condition = @Condition;
+        ELSE IF @proc_name = 'category'
+            EXEC dbo.SP_category @Opr = @Opr, @JSONstr = @JSONstr, @Condition = @Condition;
+        ELSE IF @proc_name = 'image'
+            EXEC dbo.SP_image @Opr = @Opr, @JSONstr = @JSONstr, @Condition = @Condition;
+
+        SET @Response = 'OK';
+        SELECT @Response AS [Response_Status];
+    END TRY
+    BEGIN CATCH
+        SET @Response = 'ERROR [' + CAST(ERROR_NUMBER() AS NVARCHAR(10)) + ']: ' + ERROR_MESSAGE();
+        SELECT @Response AS [Response_Status];
+    END CATCH
 END;
 GO
