@@ -19,6 +19,36 @@
 
     <style>
         :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --surface-card: #f1f5f9;
+            --surface-hover: #e2e8f0;
+            --border: #e2e8f0;
+            --border-focus: #6366f1;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-glow: rgba(79, 70, 229, 0.2);
+            --accent: #0284c7;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --sidebar-width: 260px;
+            --radius: 12px;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --input-bg: #ffffff;
+            --input-text: #0f172a;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            --modal-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            --topbar-border: #e2e8f0;
+            --bg-gradient: radial-gradient(circle at top right, rgba(99, 102, 241, 0.08), transparent 40%);
+            --table-header-bg: #f8fafc;
+            --table-hover-bg: #f1f5f9;
+            --nav-hover-bg: #f1f5f9;
+            --modal-close-hover: #0f172a;
+        }
+
+        [data-theme="dark"] {
             --bg: #0b0f19;
             --surface: #111827;
             --surface-card: #1f2937;
@@ -33,9 +63,16 @@
             --danger: #ef4444;
             --text-main: #f3f4f6;
             --text-muted: #9ca3af;
-            --sidebar-width: 260px;
-            --radius: 12px;
-            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --input-bg: #1f2937;
+            --input-text: #ffffff;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --modal-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            --topbar-border: rgba(255, 255, 255, 0.05);
+            --bg-gradient: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent 40%);
+            --table-header-bg: rgba(255, 255, 255, 0.02);
+            --table-hover-bg: rgba(255, 255, 255, 0.02);
+            --nav-hover-bg: rgba(255, 255, 255, 0.04);
+            --modal-close-hover: #ffffff;
         }
 
         * {
@@ -100,6 +137,27 @@
             letter-spacing: 0.8px;
         }
 
+        .btn-theme-toggle {
+            margin-left: auto;
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            transition: var(--transition);
+        }
+
+        .btn-theme-toggle:hover {
+            background: var(--surface-hover);
+            transform: scale(1.05);
+        }
+
         .nav-label {
             font-size: 11px;
             text-transform: uppercase;
@@ -134,7 +192,7 @@
         }
 
         .nav-item:hover {
-            background: rgba(255, 255, 255, 0.04);
+            background: var(--nav-hover-bg);
             color: var(--text-main);
             transform: translateX(3px);
         }
@@ -154,7 +212,8 @@
             flex-direction: column;
             height: 100vh;
             overflow-y: auto;
-            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent 40%);
+            background: var(--bg-gradient);
+            background-color: var(--bg);
         }
 
         .top-bar {
@@ -162,7 +221,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 24px 32px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid var(--topbar-border);
         }
 
         .title-box h1 {
@@ -259,7 +318,7 @@
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            box-shadow: var(--shadow);
             overflow-x: auto;
             animation: fadeIn 0.3s ease-in-out;
         }
@@ -271,7 +330,7 @@
         }
 
         th {
-            background: rgba(255, 255, 255, 0.02);
+            background: var(--table-header-bg);
             padding: 14px 20px;
             font-size: 11.5px;
             font-weight: 700;
@@ -285,13 +344,13 @@
         td {
             padding: 16px 20px;
             font-size: 13.5px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            color: #e5e7eb;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-main);
             white-space: nowrap;
         }
 
         tr:hover td {
-            background: rgba(255, 255, 255, 0.02);
+            background: var(--table-hover-bg);
         }
 
         .img-thumb {
@@ -300,7 +359,7 @@
             border-radius: 8px;
             object-fit: cover;
             border: 1px solid var(--border);
-            background: #000;
+            background: var(--surface-card);
         }
 
         /* =========================================
@@ -310,7 +369,7 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(6px);
             align-items: center;
             justify-content: center;
@@ -333,7 +392,7 @@
             max-height: 88vh;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            box-shadow: var(--modal-shadow);
             transform: scale(0.95);
             transition: transform 0.25s ease;
         }
@@ -365,7 +424,7 @@
         }
 
         .modal-close-btn:hover {
-            color: #fff;
+            color: var(--modal-close-hover);
         }
 
         .modal-body {
@@ -398,14 +457,19 @@
         .form-group input,
         .form-group select,
         .form-group textarea {
-            background: var(--surface-card);
+            background: var(--input-bg);
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 10px 14px;
-            color: #fff;
+            color: var(--input-text);
             font-size: 13.5px;
             outline: none;
             transition: var(--transition);
+        }
+
+        .form-group select option {
+            background: var(--surface);
+            color: var(--text-main);
         }
 
         .form-group input:focus,
@@ -488,6 +552,9 @@
                 <div class="brand-title">SilverHouse</div>
                 <div class="brand-subtitle">Studio Studio</div>
             </div>
+            <button class="btn-theme-toggle" onclick="toggleTheme()" title="Toggle Light / Dark Mode">
+                <i class="ph-bold ph-moon" id="sidebarThemeIcon"></i>
+            </button>
         </div>
 
         <div>
@@ -550,203 +617,6 @@
             </div>
         </div>
     </main>
-
-    <!-- =========================================
-       CUSTOM MODALS PER TABLE
-  ========================================= -->
-    <div id="modalContainer" class="modal-overlay">
-
-        <!-- 1. PRODUCT FORM -->
-        <div id="modal_product" class="modal-card" style="display:none;">
-            <div class="modal-header">
-                <h3 id="modalTitle_product">Add Product</h3>
-                <button class="modal-close-btn" onclick="closeModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="form_product" onsubmit="submitForm(event, 'product')">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Category Name *</label>
-                            <select name="category_id" id="product_category_select" required>
-                                <option value="">Select Category</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Make Master</label>
-                            <select name="m_id" id="product_make_select">
-                                <option value="">Select Make (Optional)</option>
-                            </select>
-                        </div>
-                        <div class="form-group full-width">
-                            <label>Product Title *</label>
-                            <input type="text" name="title" required placeholder="e.g. Floral Silver Locket" />
-                        </div>
-                        <div class="form-group">
-                            <label>Purity *</label>
-                            <input type="text" name="purity" required placeholder="e.g. 92.5 Sterling" />
-                        </div>
-                        <div class="form-group">
-                            <label>Weight *</label>
-                            <input type="text" name="weight" required placeholder="e.g. 6.20 gm" />
-                        </div>
-                        <div class="form-group full-width">
-                            <label>Description *</label>
-                            <textarea name="description" rows="2" required
-                                placeholder="Detailed item specifications..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Price (₹) *</label>
-                            <input type="number" step="0.01" name="price" required placeholder="2499.00" />
-                        </div>
-                        <div class="form-group">
-                            <label>Discount (%)</label>
-                            <input type="number" step="0.01" name="discount" placeholder="5.00" />
-                        </div>
-                        <div class="form-group">
-                            <label>Quantity *</label>
-                            <input type="number" name="quantity" required placeholder="10" />
-                        </div>
-                        <div class="form-group">
-                            <label>Ideal For *</label>
-                            <select name="ideal_for">
-                                <option value="Women">Women</option>
-                                <option value="Men">Men</option>
-                                <option value="Kids">Kids</option>
-                                <option value="ALL">ALL</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Packaging</label>
-                            <input type="text" name="packaging" placeholder="e.g. Velvet Box" />
-                        </div>
-                        <div class="form-group">
-                            <label>Labour Cost (₹)</label>
-                            <input type="number" step="0.01" name="labour_cost" placeholder="300.00" />
-                        </div>
-                        <div class="form-group full-width">
-                            <label>Actual Cost (₹) *</label>
-                            <input type="number" step="0.01" name="actual_cost" required placeholder="1700.00" />
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Product</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- 2. CATEGORY FORM -->
-        <div id="modal_category" class="modal-card" style="display:none; max-width: 480px;">
-            <div class="modal-header">
-                <h3 id="modalTitle_category">Add Category</h3>
-                <button class="modal-close-btn" onclick="closeModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="form_category" onsubmit="submitForm(event, 'category')">
-                    <div class="form-grid">
-                        <div class="form-group full-width">
-                            <label>Category Name *</label>
-                            <input type="text" name="name" required placeholder="e.g. Silver Bangles" />
-                        </div>
-                        <div class="form-group full-width">
-                            <label>Slug *</label>
-                            <input type="text" name="slug" required placeholder="e.g. silver-bangles" />
-                        </div>
-                        <div class="form-group full-width">
-                            <label>Description *</label>
-                            <textarea name="description" rows="2" required
-                                placeholder="Description of category..."></textarea>
-                        </div>
-                        <div class="form-group full-width">
-                            <label>Ideal For</label>
-                            <select name="ideal_for">
-                                <option value="Women">Women</option>
-                                <option value="Men">Men</option>
-                                <option value="ALL">ALL</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Category</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- 3. IMAGE FORM -->
-        <div id="modal_image" class="modal-card" style="display:none; max-width: 460px;">
-            <div class="modal-header">
-                <h3 id="modalTitle_image">Add Image URL</h3>
-                <button class="modal-close-btn" onclick="closeModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="form_image" onsubmit="submitForm(event, 'image')">
-                    <div class="form-grid">
-                        <div class="form-group full-width">
-                            <label>CDN / Image URL *</label>
-                            <input type="url" name="image_url" required
-                                placeholder="https://cdn.silverhouse.com/products/item.jpg" />
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Image</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- 4. MAKE MASTER FORM -->
-        <div id="modal_make_master" class="modal-card" style="display:none; max-width: 440px;">
-            <div class="modal-header">
-                <h3 id="modalTitle_make_master">Add Make Type</h3>
-                <button class="modal-close-btn" onclick="closeModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="form_make_master" onsubmit="submitForm(event, 'make_master')">
-                    <div class="form-grid">
-                        <div class="form-group full-width">
-                            <label>Make / Craft Type *</label>
-                            <input type="text" name="type" required placeholder="e.g. Handmade, Laser Cut" />
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Make Type</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- 5. PRODUCT IMAGE MAPPING FORM -->
-        <div id="modal_product_image" class="modal-card" style="display:none; max-width: 440px;">
-            <div class="modal-header">
-                <h3 id="modalTitle_product_image">Map Image to Product</h3>
-                <button class="modal-close-btn" onclick="closeModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="form_product_image" onsubmit="submitForm(event, 'product_image')">
-                    <div class="form-grid">
-                        <div class="form-group full-width">
-                            <label>Product ID *</label>
-                            <input type="number" name="product_id" required placeholder="e.g. 102" />
-                        </div>
-                        <div class="form-group full-width">
-                            <label>Image ID *</label>
-                            <input type="number" name="image_id" required placeholder="e.g. 5" />
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Link</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-    </div>
 
     <!-- Toast Notification element -->
     <div id="toast" class="toast"></div>
@@ -907,66 +777,42 @@
             });
         }
 
-        // Modal Handlers
-        async function openAddModal() {
-            editId = null;
-            hideAllModals();
+        const FORM_PAGES = {
+            product: '/product-form.html',
+            category: '/category-form.html',
+            image: '/image-form.html',
+            make_master: '/make-master-form.html',
+            product_image: '/product-image-form.html'
+        };
 
-            await loadDropdownOptions();
-
-            const modalEl = document.getElementById(`modal_${activeEntity}`);
-            const formEl = document.getElementById(`form_${activeEntity}`);
-            formEl.reset();
-
-            document.getElementById(`modalTitle_${activeEntity}`).innerText = `Add ${activeEntity.replace('_', ' ')}`;
-            modalEl.style.display = 'flex';
-
-            const overlay = document.getElementById('modalContainer');
-            overlay.style.display = 'flex';
-            setTimeout(() => overlay.classList.add('show'), 10);
+        // Navigation Handlers for Separate Form Pages
+        function openAddModal() {
+            const page = FORM_PAGES[activeEntity] || '/product-form.html';
+            window.location.href = page;
         }
 
-        async function openEditModal(id) {
-            editId = id;
-            hideAllModals();
+        function openEditModal(id) {
+            const page = FORM_PAGES[activeEntity] || '/product-form.html';
+            window.location.href = `${page}?id=${id}`;
+        }
 
-            await loadDropdownOptions();
-
-            const modalEl = document.getElementById(`modal_${activeEntity}`);
-            const formEl = document.getElementById(`form_${activeEntity}`);
-            formEl.reset();
-
-            const row = currentRows.find(r => r[PK_MAP[activeEntity]] == id);
-            if (row) {
-                Object.keys(row).forEach(key => {
-                    if (formEl.elements[key]) {
-                        formEl.elements[key].value = row[key] !== null ? row[key] : '';
+        // Initialize active entity from URL parameter if present
+        function initActiveEntity() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const entityParam = urlParams.get('entity');
+            if (entityParam && PK_MAP[entityParam]) {
+                activeEntity = entityParam;
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                    if (item.getAttribute('onclick') && item.getAttribute('onclick').includes(`'${entityParam}'`)) {
+                        item.classList.add('active');
                     }
                 });
+                const cleanName = activeEntity.replace('_', ' ').toUpperCase();
+                document.getElementById('pageTitle').innerText = cleanName;
+                const btnAdd = document.getElementById('btnAddText');
+                if (btnAdd) btnAdd.innerText = `+ Add ${cleanName.slice(0, -1)}`;
             }
-
-            document.getElementById(`modalTitle_${activeEntity}`).innerText = `Edit ${activeEntity.replace('_', ' ')} (#${id})`;
-            modalEl.style.display = 'flex';
-
-            const overlay = document.getElementById('modalContainer');
-            overlay.style.display = 'flex';
-            setTimeout(() => overlay.classList.add('show'), 10);
-        }
-
-        function closeModal() {
-            const overlay = document.getElementById('modalContainer');
-            overlay.classList.remove('show');
-            setTimeout(() => {
-                overlay.style.display = 'none';
-                hideAllModals();
-            }, 250);
-        }
-
-        function hideAllModals() {
-            ['product', 'category', 'image', 'make_master', 'product_image'].forEach(name => {
-                const el = document.getElementById(`modal_${name}`);
-                if (el) el.style.display = 'none';
-            });
         }
 
         // Form Submit Handler
@@ -1132,6 +978,39 @@
                 toast.classList.remove('show');
             }, 3500);
         }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            const themeIcon = document.getElementById('themeIcon');
+            const themeToggleText = document.getElementById('themeToggleText');
+            const sidebarThemeIcon = document.getElementById('sidebarThemeIcon');
+
+            if (theme === 'dark') {
+                if (themeIcon) themeIcon.className = 'ph-bold ph-sun';
+                if (themeToggleText) themeToggleText.innerText = 'Light Mode';
+                if (sidebarThemeIcon) sidebarThemeIcon.className = 'ph-bold ph-sun';
+            } else {
+                if (themeIcon) themeIcon.className = 'ph-bold ph-moon';
+                if (themeToggleText) themeToggleText.innerText = 'Dark Mode';
+                if (sidebarThemeIcon) sidebarThemeIcon.className = 'ph-bold ph-moon';
+            }
+        }
+
+        // Initialize theme and entity before loading data
+        initTheme();
+        initActiveEntity();
 
         // Initial load
         loadData();

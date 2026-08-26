@@ -304,5 +304,5 @@ EXEC dbo.SP_GETDATA
 
 -- View all product-image mappings across the store
 EXEC dbo.SP_GETDATA 
-    @proc_name = 'product_image', 
+    @proc_name = 'product', 
     @Opr = 'SELECT';

@@ -6,6 +6,8 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 
+const fs = require('fs');
+
 // Serve static HTML and dashboard assets
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -16,6 +18,16 @@ app.get('/', (req, res) => {
 
 app.get('/api/data', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Serve form HTML files if requested via /api/ path
+app.get('/api/:file', (req, res, next) => {
+    const file = req.params.file;
+    const filePath = path.join(__dirname, 'public', file);
+    if (file.endsWith('.html') && fs.existsSync(filePath)) {
+        return res.sendFile(filePath);
+    }
+    next();
 });
 
 // Single unified endpoint handling all operations from forms & API
