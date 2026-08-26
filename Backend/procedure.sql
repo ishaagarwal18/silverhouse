@@ -13,10 +13,7 @@ GO
 -- =========================================================================
 -- PROCEDURE 1: SP_product
 -- =========================================================================
-USE SilverHouse;
-GO
-
-CREATE OR ALTER PROCEDURE dbo.SP_product
+CREATE PROCEDURE dbo.SP_product
     @Opr       NVARCHAR(10),
     @JSONstr   NVARCHAR(MAX) = NULL,
     @Condition NVARCHAR(255) = NULL
@@ -73,7 +70,7 @@ BEGIN
         END
     END
 
-    -- SELECT
+    -- CRUD ROUTING
     IF @Opr = 'SELECT'
     BEGIN
         IF @TargetId IS NOT NULL AND @TargetId > 0
@@ -82,7 +79,6 @@ BEGIN
             SELECT * FROM dbo.product;
     END
 
-    -- ADD
     ELSE IF @Opr = 'ADD'
     BEGIN
         IF @CategoryId IS NULL
@@ -157,7 +153,6 @@ BEGIN
         SELECT @NewProductId AS NewProductId, 'Product added successfully' AS [Message];
     END
 
-    -- EDIT
     ELSE IF @Opr = 'EDIT'
     BEGIN
         IF @CategoryId IS NOT NULL AND NOT EXISTS (SELECT 1 FROM dbo.category WHERE category_id = @CategoryId)
@@ -190,19 +185,34 @@ BEGIN
         SELECT @TargetId AS ProductId, 'Product updated successfully' AS [Message];
     END
 
-    -- DELETE (Cascading delete of linked relationships)
+    -- DELETE: Cascading delete of linked records
     ELSE IF @Opr = 'DELETE'
     BEGIN
         BEGIN TRANSACTION;
         BEGIN TRY
-            -- 1. Delete mapping links in junction table
-            DELETE FROM dbo.product_image WHERE product_id = @TargetId;
+            -- Temp table to track image_ids linked to this product
+            DECLARE @ImagesToDelete TABLE (image_id INT);
 
-            -- 2. Delete the actual product
-            DELETE FROM dbo.product WHERE product_id = @TargetId;
+            INSERT INTO @ImagesToDelete (image_id)
+            SELECT image_id 
+            FROM dbo.product_image 
+            WHERE product_id = @TargetId;
+
+            -- 1. Remove junction relationships
+            DELETE FROM dbo.product_image 
+            WHERE product_id = @TargetId;
+
+            -- 2. Remove orphaned images not linked to any other product
+            DELETE FROM dbo.[image]
+            WHERE image_id IN (SELECT image_id FROM @ImagesToDelete)
+              AND image_id NOT IN (SELECT image_id FROM dbo.product_image);
+
+            -- 3. Delete product
+            DELETE FROM dbo.product 
+            WHERE product_id = @TargetId;
 
             COMMIT TRANSACTION;
-            SELECT @TargetId AS ProductId, 'Product and its linked records deleted successfully' AS [Message];
+            SELECT @TargetId AS ProductId, 'Product and all associated data deleted successfully' AS [Message];
         END TRY
         BEGIN CATCH
             IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
@@ -211,13 +221,14 @@ BEGIN
     END
 END;
 GO
+
 -- =========================================================================
 -- PROCEDURE 2: SP_category
 -- =========================================================================
 CREATE PROCEDURE dbo.SP_category
     @Opr       NVARCHAR(10),
     @JSONstr   NVARCHAR(MAX) = NULL,
-    @Condition NVARCHAR(MAX) = NULL
+    @Condition NVARCHAR(255) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -229,7 +240,6 @@ BEGIN
     DECLARE @Slug VARCHAR(50);
     DECLARE @IdealFor VARCHAR(20);
 
-    -- Extract JSON fields
     IF @JSONstr IS NOT NULL AND ISJSON(@JSONstr) > 0
     BEGIN
         SELECT
@@ -239,7 +249,6 @@ BEGIN
             @IdealFor    = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.ideal_for')));
     END
 
-    -- Existence Check for EDIT / DELETE
     IF @Opr IN ('EDIT', 'DELETE')
     BEGIN
         IF NOT EXISTS (SELECT 1 FROM dbo.category WHERE category_id = @TargetId)
@@ -249,7 +258,6 @@ BEGIN
         END
     END
 
-    -- CRUD ROUTING
     IF @Opr = 'SELECT'
     BEGIN
         IF @TargetId IS NOT NULL AND @TargetId > 0
@@ -336,7 +344,7 @@ GO
 CREATE PROCEDURE dbo.SP_image
     @Opr       NVARCHAR(10),
     @JSONstr   NVARCHAR(MAX) = NULL,
-    @Condition NVARCHAR(MAX) = NULL
+    @Condition NVARCHAR(255) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -345,14 +353,12 @@ BEGIN
     DECLARE @ImageUrl VARCHAR(500);
     DECLARE @NewImageId INT;
 
-    -- Extract JSON fields
     IF @JSONstr IS NOT NULL AND ISJSON(@JSONstr) > 0
     BEGIN
         SELECT
             @ImageUrl = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.image_url')));
     END
 
-    -- Existence Check for EDIT / DELETE
     IF @Opr IN ('EDIT', 'DELETE')
     BEGIN
         IF NOT EXISTS (SELECT 1 FROM dbo.[image] WHERE image_id = @TargetId)
@@ -362,7 +368,6 @@ BEGIN
         END
     END
 
-    -- CRUD ROUTING
     IF @Opr = 'SELECT'
     BEGIN
         IF @TargetId IS NOT NULL AND @TargetId > 0
@@ -419,18 +424,13 @@ BEGIN
 END;
 GO
 
-
 -- =========================================================================
 -- PROCEDURE 4: SP_make_master
 -- =========================================================================
-
-USE SilverHouse;
-GO
-
-CREATE OR ALTER PROCEDURE dbo.SP_make_master
+CREATE PROCEDURE dbo.SP_make_master
     @Opr       NVARCHAR(10),
     @JSONstr   NVARCHAR(MAX) = NULL,
-    @Condition NVARCHAR(MAX) = NULL
+    @Condition NVARCHAR(255) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -439,14 +439,12 @@ BEGIN
     DECLARE @NewMakeId INT;
     DECLARE @Type VARCHAR(50);
 
-    -- Extract JSON fields
     IF @JSONstr IS NOT NULL AND ISJSON(@JSONstr) > 0
     BEGIN
         SELECT
             @Type = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.type')));
     END
 
-    -- Existence Check for EDIT / DELETE
     IF @Opr IN ('EDIT', 'DELETE')
     BEGIN
         IF NOT EXISTS (SELECT 1 FROM dbo.make_master WHERE m_id = @TargetId)
@@ -456,7 +454,6 @@ BEGIN
         END
     END
 
-    -- SELECT
     IF @Opr = 'SELECT'
     BEGIN
         IF @TargetId IS NOT NULL AND @TargetId > 0
@@ -465,7 +462,6 @@ BEGIN
             SELECT m_id, [type] FROM dbo.make_master;
     END
 
-    -- ADD
     ELSE IF @Opr = 'ADD'
     BEGIN
         IF @Type IS NULL OR LEN(@Type) = 0
@@ -488,7 +484,6 @@ BEGIN
         SELECT @NewMakeId AS NewMakeId, 'Make entry added successfully' AS [Message];
     END
 
-    -- EDIT
     ELSE IF @Opr = 'EDIT'
     BEGIN
         IF @Type IS NULL OR LEN(@Type) = 0
@@ -510,7 +505,6 @@ BEGIN
         SELECT @TargetId AS MakeId, 'Make entry updated successfully' AS [Message];
     END
 
-    -- DELETE
     ELSE IF @Opr = 'DELETE'
     BEGIN
         IF EXISTS (SELECT 1 FROM dbo.product WHERE m_id = @TargetId)
@@ -525,17 +519,13 @@ BEGIN
 END;
 GO
 
-
 -- =========================================================================
 -- PROCEDURE 5: SP_product_image
 -- =========================================================================
-USE SilverHouse;
-GO
-
-CREATE OR ALTER PROCEDURE dbo.SP_product_image
+CREATE PROCEDURE dbo.SP_product_image
     @Opr       NVARCHAR(10),
     @JSONstr   NVARCHAR(MAX) = NULL,
-    @Condition NVARCHAR(MAX) = NULL -- Can be product_id for filtering
+    @Condition NVARCHAR(255) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -544,7 +534,6 @@ BEGIN
     DECLARE @ProductId INT;
     DECLARE @ImageId INT;
 
-    -- Extract JSON fields
     IF @JSONstr IS NOT NULL AND ISJSON(@JSONstr) > 0
     BEGIN
         SELECT
@@ -552,11 +541,9 @@ BEGIN
             @ImageId   = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.image_id') AS INT);
     END
 
-    -- If condition was passed, use it as fallback for ProductId
     IF @ProductId IS NULL AND @TargetProductId IS NOT NULL
         SET @ProductId = @TargetProductId;
 
-    -- SELECT
     IF @Opr = 'SELECT'
     BEGIN
         IF @TargetProductId IS NOT NULL AND @TargetProductId > 0
@@ -584,7 +571,6 @@ BEGIN
         END
     END
 
-    -- ADD
     ELSE IF @Opr = 'ADD'
     BEGIN
         IF @ProductId IS NULL OR @ProductId <= 0
@@ -599,7 +585,6 @@ BEGIN
             RETURN;
         END
 
-        -- FK Validation
         IF NOT EXISTS (SELECT 1 FROM dbo.product WHERE product_id = @ProductId)
         BEGIN
             RAISERROR('Validation Error: Product ID %d does not exist.', 16, 1, @ProductId);
@@ -612,7 +597,6 @@ BEGIN
             RETURN;
         END
 
-        -- Composite PK Duplicate Check
         IF EXISTS (SELECT 1 FROM dbo.product_image WHERE product_id = @ProductId AND image_id = @ImageId)
         BEGIN
             RAISERROR('Validation Error: This image is already mapped to the specified product.', 16, 1);
@@ -625,10 +609,8 @@ BEGIN
         SELECT @ProductId AS ProductId, @ImageId AS ImageId, 'Product image mapped successfully' AS [Message];
     END
 
-    -- DELETE
     ELSE IF @Opr = 'DELETE'
     BEGIN
-        -- If both product_id and image_id provided, delete exact record
         IF @ProductId IS NOT NULL AND @ImageId IS NOT NULL
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM dbo.product_image WHERE product_id = @ProductId AND image_id = @ImageId)
@@ -640,7 +622,6 @@ BEGIN
             DELETE FROM dbo.product_image WHERE product_id = @ProductId AND image_id = @ImageId;
             SELECT @ProductId AS ProductId, @ImageId AS ImageId, 'Mapping removed successfully' AS [Message];
         END
-        -- If only product_id is provided via Condition, remove all images linked to that product
         ELSE IF @TargetProductId IS NOT NULL
         BEGIN
             DELETE FROM dbo.product_image WHERE product_id = @TargetProductId;
@@ -661,16 +642,13 @@ END;
 GO
 
 -- =========================================================================
--- PROCEDURE 6: SP_GETDATA 
+-- PROCEDURE 6: SP_GETDATA
 -- =========================================================================
-USE SilverHouse;
-GO
-
-CREATE OR ALTER PROCEDURE dbo.SP_GETDATA
+CREATE PROCEDURE dbo.SP_GETDATA
     @proc_name   NVARCHAR(50),
     @Opr         NVARCHAR(10),
     @JSONstr     NVARCHAR(MAX) = NULL,
-    @Condition   NVARCHAR(MAX) = NULL
+    @Condition   NVARCHAR(255) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -680,7 +658,6 @@ BEGIN
     SET @proc_name = LOWER(LTRIM(RTRIM(@proc_name)));
     SET @Opr = UPPER(LTRIM(RTRIM(@Opr)));
 
-    -- 1. Table/Procedure Name Validation
     IF @proc_name IS NULL OR @proc_name = ''
     BEGIN
         SET @Response = 'ERROR: proc_name cannot be empty.';
@@ -688,7 +665,6 @@ BEGIN
         RETURN;
     END
 
-    -- Whitelist including new tables
     IF @proc_name NOT IN ('product', 'category', 'image', 'make_master', 'product_image')
     BEGIN
         SET @Response = 'SECURITY ERROR: Unauthorized or unsupported proc_name "' + @proc_name + '".';
@@ -703,7 +679,6 @@ BEGIN
         RETURN;
     END
 
-    -- 2. Operation Validation
     IF @Opr NOT IN ('ADD', 'EDIT', 'DELETE', 'SELECT')
     BEGIN
         SET @Response = 'VALIDATION ERROR: Invalid operation "' + @Opr + '". Allowed: ADD, EDIT, DELETE, SELECT.';
@@ -711,7 +686,6 @@ BEGIN
         RETURN;
     END
 
-    -- 3. JSON Payload Validation (Required for ADD)
     IF @Opr = 'ADD'
     BEGIN
         IF @JSONstr IS NULL OR ISJSON(@JSONstr) = 0
@@ -722,7 +696,6 @@ BEGIN
         END
     END
 
-    -- 4. Execution with TRY...CATCH
     BEGIN TRY
         IF @proc_name = 'product'
             EXEC dbo.SP_product @Opr = @Opr, @JSONstr = @JSONstr, @Condition = @Condition;

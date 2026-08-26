@@ -4,105 +4,264 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SilverHouse Admin Dashboard</title>
+    <title>SilverHouse Studio Admin</title>
+
+    <!-- SheetJS & Mammoth for file imports -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+    <!-- Google Fonts & Phosphor Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
     <style>
         :root {
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --primary: #1e293b;
-            --accent: #2563eb;
-            --accent-hover: #1d4ed8;
-            --danger: #dc2626;
-            --border: #e2e8f0;
-            --text: #0f172a;
-            --text-muted: #64748b;
+            --bg: #0b0f19;
+            --surface: #111827;
+            --surface-card: #1f2937;
+            --surface-hover: #374151;
+            --border: #374151;
+            --border-focus: #6366f1;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-glow: rgba(99, 102, 241, 0.25);
+            --accent: #38bdf8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --sidebar-width: 260px;
+            --radius: 12px;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         * {
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
         body {
             background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 24px;
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .header {
+        /* =========================================
+       SIDEBAR
+    ========================================= */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            padding: 24px 16px;
+            gap: 32px;
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
             align-items: center;
-            margin-bottom: 20px;
+            gap: 12px;
+            padding: 0 8px;
         }
 
-        .tabs {
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 10px;
             display: flex;
-            gap: 8px;
-            border-bottom: 2px solid var(--border);
-            padding-bottom: 8px;
-            margin-bottom: 20px;
-        }
-
-        .tab-btn {
-            background: none;
-            border: none;
-            padding: 10px 18px;
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-muted);
-            cursor: pointer;
-            border-radius: 6px;
-        }
-
-        .tab-btn.active {
-            background-color: var(--primary);
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
             color: #fff;
+            box-shadow: 0 4px 12px var(--primary-glow);
         }
 
-        .action-bar {
+        .brand-title {
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .brand-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            padding: 0 8px 8px;
+            font-weight: 600;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            list-style: none;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .nav-item i {
+            font-size: 18px;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-main);
+            transform: translateX(3px);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 14px var(--primary-glow);
+        }
+
+        /* =========================================
+       MAIN CONTENT AREA
+    ========================================= */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent 40%);
+        }
+
+        .top-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            padding: 24px 32px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .title-box h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .title-box p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .action-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 600;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
+            border: 1px solid transparent;
+            transition: var(--transition);
         }
 
         .btn-primary {
-            background: var(--accent);
+            background: var(--primary);
             color: #fff;
+            box-shadow: 0 4px 12px var(--primary-glow);
         }
 
         .btn-primary:hover {
-            background: var(--accent-hover);
+            background: var(--primary-hover);
+            transform: translateY(-1px);
         }
 
-        .btn-edit {
-            background: #e0f2fe;
-            color: #0284c7;
-            margin-right: 6px;
+        .btn-secondary {
+            background: var(--surface-card);
+            color: var(--text-main);
+            border-color: var(--border);
         }
 
-        .btn-delete {
-            background: #fee2e2;
+        .btn-secondary:hover {
+            background: var(--surface-hover);
+        }
+
+        .btn-action-edit {
+            padding: 6px 12px;
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12.5px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .btn-action-edit:hover {
+            background: rgba(56, 189, 248, 0.2);
+        }
+
+        .btn-action-del {
+            padding: 6px 12px;
+            background: rgba(239, 68, 68, 0.1);
             color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12.5px;
+            font-weight: 600;
+            transition: var(--transition);
+            margin-left: 6px;
         }
 
-        .card {
-            background: var(--card-bg);
+        .btn-action-del:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .content-area {
+            padding: 32px;
+            flex: 1;
+        }
+
+        .table-card {
+            background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            overflow-x: auto;
+            animation: fadeIn 0.3s ease-in-out;
         }
 
         table {
@@ -111,220 +270,589 @@
             text-align: left;
         }
 
-        th,
-        td {
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border);
-            font-size: 14px;
-        }
-
         th {
-            background: #f1f5f9;
-            color: var(--text-muted);
-            font-weight: 600;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 14px 20px;
+            font-size: 11.5px;
+            font-weight: 700;
             text-transform: uppercase;
-            font-size: 12px;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
         }
 
-        tr:last-child td {
-            border-bottom: none;
+        td {
+            padding: 16px 20px;
+            font-size: 13.5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #e5e7eb;
+            white-space: nowrap;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
         }
 
         .img-thumb {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
             object-fit: cover;
-            border-radius: 4px;
             border: 1px solid var(--border);
+            background: #000;
         }
 
-        /* Modal Styles */
+        /* =========================================
+       MODALS & CUSTOM FORMS
+    ========================================= */
         .modal-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
             align-items: center;
             justify-content: center;
-            z-index: 100;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.25s ease;
         }
 
-        .modal {
-            background: #fff;
-            border-radius: 8px;
+        .modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
             width: 100%;
-            max-width: 520px;
-            padding: 24px;
-            max-height: 90vh;
-            overflow-y: auto;
+            max-width: 640px;
+            max-height: 88vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            transform: scale(0.95);
+            transition: transform 0.25s ease;
+        }
+
+        .modal-overlay.show .modal-card {
+            transform: scale(1);
         }
 
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
-            font-weight: 700;
-            font-size: 18px;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
         }
 
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-            margin-top: 20px;
+        .modal-header h3 {
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .modal-close-btn:hover {
+            color: #fff;
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
         }
 
         .form-group {
-            margin-bottom: 12px;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 6px;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
         }
 
         .form-group label {
-            font-size: 13px;
+            font-size: 12.5px;
             font-weight: 600;
             color: var(--text-muted);
         }
 
         .form-group input,
-        .form-group textarea,
-        .form-group select {
-            padding: 8px 12px;
+        .form-group select,
+        .form-group textarea {
+            background: var(--surface-card);
             border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 14px;
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: #fff;
+            font-size: 13.5px;
+            outline: none;
+            transition: var(--transition);
         }
 
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: var(--text-muted);
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-success {
+            background: #064e3b;
+            color: #a7f3d0;
+            border: 1px solid #059669;
+        }
+
+        .toast-error {
+            background: #450a0a;
+            color: #fecaca;
+            border: 1px solid #dc2626;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
 
 <body>
 
-    <div class="header">
-        <h2>SilverHouse Management Studio</h2>
-    </div>
-
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('product')">Products</button>
-        <button class="tab-btn" onclick="switchTab('category')">Categories</button>
-        <button class="tab-btn" onclick="switchTab('image')">Images</button>
-        <button class="tab-btn" onclick="switchTab('make_master')">Make Types</button>
-        <button class="tab-btn" onclick="switchTab('product_image')">Product Images</button>
-    </div>
-
-    <div class="action-bar">
-        <span id="tabTitle" style="font-weight: 600; font-size: 16px;">Products</span>
-        <button class="btn btn-primary" onclick="openAddModal()">+ Add New</button>
-    </div>
-
-    <div class="card">
-        <table>
-            <thead id="tableHead"></thead>
-            <tbody id="tableBody"></tbody>
-        </table>
-    </div>
-
-    <!-- Dynamic Modal Form -->
-    <div id="modalOverlay" class="modal-overlay">
-        <div class="modal">
-            <div class="modal-header">
-                <span id="modalTitle">Add Record</span>
-                <button class="close-btn" onclick="closeModal()">&times;</button>
+    <!-- =========================================
+       SIDEBAR NAVIGATION
+  ========================================= -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-logo">
+                <i class="ph-bold ph-gem"></i>
             </div>
-            <form id="dynamicForm" onsubmit="handleFormSubmit(event)">
-                <div id="formFields"></div>
-                <div class="modal-footer">
-                    <button type="button" class="btn" style="background:#e2e8f0" onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="modalSaveBtn">Save</button>
-                </div>
-            </form>
+            <div>
+                <div class="brand-title">SilverHouse</div>
+                <div class="brand-subtitle">Studio Studio</div>
+            </div>
         </div>
+
+        <div>
+            <div class="nav-label">Database Schemas</div>
+            <ul class="nav-menu">
+                <li class="nav-item active" onclick="navigate('product')">
+                    <i class="ph-bold ph-shopping-bag"></i>
+                    <span>Products</span>
+                </li>
+                <li class="nav-item" onclick="navigate('category')">
+                    <i class="ph-bold ph-squares-four"></i>
+                    <span>Categories</span>
+                </li>
+                <li class="nav-item" onclick="navigate('image')">
+                    <i class="ph-bold ph-image"></i>
+                    <span>Images</span>
+                </li>
+                <li class="nav-item" onclick="navigate('make_master')">
+                    <i class="ph-bold ph-wrench"></i>
+                    <span>Make Master</span>
+                </li>
+                <li class="nav-item" onclick="navigate('product_image')">
+                    <i class="ph-bold ph-link"></i>
+                    <span>Product Images</span>
+                </li>
+            </ul>
+        </div>
+    </aside>
+
+    <!-- =========================================
+       MAIN DASHBOARD
+  ========================================= -->
+    <main class="main-wrapper">
+        <header class="top-bar">
+            <div class="title-box">
+                <h1 id="pageTitle">Products</h1>
+                <p id="pageDescription">Manage, search, and edit database records</p>
+            </div>
+
+            <div class="action-controls">
+                <input type="file" id="fileUploadInput" accept=".csv, .xlsx, .xls, .docx" style="display:none;"
+                    onchange="handleFileUpload(event)" />
+                <button class="btn btn-secondary" onclick="document.getElementById('fileUploadInput').click()">
+                    <i class="ph-bold ph-upload-simple"></i>
+                    <span>Import (Excel/Word/CSV)</span>
+                </button>
+                <button class="btn btn-primary" onclick="openAddModal()">
+                    <i class="ph-bold ph-plus"></i>
+                    <span>Add Product</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="table-card">
+                <table>
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- =========================================
+       CUSTOM MODALS PER TABLE
+  ========================================= -->
+    <div id="modalContainer" class="modal-overlay">
+
+        <!-- 1. PRODUCT FORM -->
+        <div id="modal_product" class="modal-card" style="display:none;">
+            <div class="modal-header">
+                <h3 id="modalTitle_product">Add Product</h3>
+                <button class="modal-close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form_product" onsubmit="submitForm(event, 'product')">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Category Name *</label>
+                            <select name="category_id" id="product_category_select" required>
+                                <option value="">Select Category</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Make Master</label>
+                            <select name="m_id" id="product_make_select">
+                                <option value="">Select Make (Optional)</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Product Title *</label>
+                            <input type="text" name="title" required placeholder="e.g. Floral Silver Locket" />
+                        </div>
+                        <div class="form-group">
+                            <label>Purity *</label>
+                            <input type="text" name="purity" required placeholder="e.g. 92.5 Sterling" />
+                        </div>
+                        <div class="form-group">
+                            <label>Weight *</label>
+                            <input type="text" name="weight" required placeholder="e.g. 6.20 gm" />
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Description *</label>
+                            <textarea name="description" rows="2" required
+                                placeholder="Detailed item specifications..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Price (₹) *</label>
+                            <input type="number" step="0.01" name="price" required placeholder="2499.00" />
+                        </div>
+                        <div class="form-group">
+                            <label>Discount (%)</label>
+                            <input type="number" step="0.01" name="discount" placeholder="5.00" />
+                        </div>
+                        <div class="form-group">
+                            <label>Quantity *</label>
+                            <input type="number" name="quantity" required placeholder="10" />
+                        </div>
+                        <div class="form-group">
+                            <label>Ideal For *</label>
+                            <select name="ideal_for">
+                                <option value="Women">Women</option>
+                                <option value="Men">Men</option>
+                                <option value="Kids">Kids</option>
+                                <option value="ALL">ALL</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Packaging</label>
+                            <input type="text" name="packaging" placeholder="e.g. Velvet Box" />
+                        </div>
+                        <div class="form-group">
+                            <label>Labour Cost (₹)</label>
+                            <input type="number" step="0.01" name="labour_cost" placeholder="300.00" />
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Actual Cost (₹) *</label>
+                            <input type="number" step="0.01" name="actual_cost" required placeholder="1700.00" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Product</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 2. CATEGORY FORM -->
+        <div id="modal_category" class="modal-card" style="display:none; max-width: 480px;">
+            <div class="modal-header">
+                <h3 id="modalTitle_category">Add Category</h3>
+                <button class="modal-close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form_category" onsubmit="submitForm(event, 'category')">
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label>Category Name *</label>
+                            <input type="text" name="name" required placeholder="e.g. Silver Bangles" />
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Slug *</label>
+                            <input type="text" name="slug" required placeholder="e.g. silver-bangles" />
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Description *</label>
+                            <textarea name="description" rows="2" required
+                                placeholder="Description of category..."></textarea>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Ideal For</label>
+                            <select name="ideal_for">
+                                <option value="Women">Women</option>
+                                <option value="Men">Men</option>
+                                <option value="ALL">ALL</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Category</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 3. IMAGE FORM -->
+        <div id="modal_image" class="modal-card" style="display:none; max-width: 460px;">
+            <div class="modal-header">
+                <h3 id="modalTitle_image">Add Image URL</h3>
+                <button class="modal-close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form_image" onsubmit="submitForm(event, 'image')">
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label>CDN / Image URL *</label>
+                            <input type="url" name="image_url" required
+                                placeholder="https://cdn.silverhouse.com/products/item.jpg" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Image</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 4. MAKE MASTER FORM -->
+        <div id="modal_make_master" class="modal-card" style="display:none; max-width: 440px;">
+            <div class="modal-header">
+                <h3 id="modalTitle_make_master">Add Make Type</h3>
+                <button class="modal-close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form_make_master" onsubmit="submitForm(event, 'make_master')">
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label>Make / Craft Type *</label>
+                            <input type="text" name="type" required placeholder="e.g. Handmade, Laser Cut" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Make Type</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 5. PRODUCT IMAGE MAPPING FORM -->
+        <div id="modal_product_image" class="modal-card" style="display:none; max-width: 440px;">
+            <div class="modal-header">
+                <h3 id="modalTitle_product_image">Map Image to Product</h3>
+                <button class="modal-close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form_product_image" onsubmit="submitForm(event, 'product_image')">
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label>Product ID *</label>
+                            <input type="number" name="product_id" required placeholder="e.g. 102" />
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Image ID *</label>
+                            <input type="number" name="image_id" required placeholder="e.g. 5" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Link</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
     </div>
+
+    <!-- Toast Notification element -->
+    <div id="toast" class="toast"></div>
 
     <script>
-        let currentProc = 'product';
+        let activeEntity = 'product';
         let currentRows = [];
-        let editingCondition = null;
+        let editId = null;
 
-        const SCHEMAS = {
-            product: {
-                idKey: 'product_id',
-                fields: [
-                    { name: 'category_id', label: 'Category ID', type: 'number', required: true },
-                    { name: 'm_id', label: 'Make ID (m_id)', type: 'number' },
-                    { name: 'title', label: 'Title / Name', type: 'text', required: true },
-                    { name: 'purity', label: 'Purity (e.g. 92.5)', type: 'text', required: true },
-                    { name: 'weight', label: 'Weight (e.g. 10.5 gm)', type: 'text', required: true },
-                    { name: 'description', label: 'Description', type: 'textarea', required: true },
-                    { name: 'price', label: 'Price (₹)', type: 'number', required: true },
-                    { name: 'discount', label: 'Discount (%)', type: 'number' },
-                    { name: 'quantity', label: 'Quantity', type: 'number', required: true },
-                    { name: 'ideal_for', label: 'Ideal For', type: 'text', required: true },
-                    { name: 'packaging', label: 'Packaging', type: 'text' },
-                    { name: 'labour_cost', label: 'Labour Cost (₹)', type: 'number' },
-                    { name: 'actual_cost', label: 'Actual Cost (₹)', type: 'number', required: true }
-                ]
-            },
-            category: {
-                idKey: 'category_id',
-                fields: [
-                    { name: 'name', label: 'Category Name', type: 'text', required: true },
-                    { name: 'description', label: 'Description', type: 'textarea', required: true },
-                    { name: 'slug', label: 'Slug', type: 'text', required: true },
-                    { name: 'ideal_for', label: 'Ideal For', type: 'text' }
-                ]
-            },
-            image: {
-                idKey: 'image_id',
-                fields: [
-                    { name: 'image_url', label: 'Image URL', type: 'text', required: true }
-                ]
-            },
-            make_master: {
-                idKey: 'm_id',
-                fields: [
-                    { name: 'type', label: 'Type (e.g. Handmade)', type: 'text', required: true }
-                ]
-            },
-            product_image: {
-                idKey: 'product_id',
-                fields: [
-                    { name: 'product_id', label: 'Product ID', type: 'number', required: true },
-                    { name: 'image_id', label: 'Image ID', type: 'number', required: true }
-                ]
-            }
+        let categoriesList = [];
+        let makeMasterList = [];
+        let categoriesMap = {};
+        let makeMasterMap = {};
+
+        const PK_MAP = {
+            product: 'product_id',
+            category: 'category_id',
+            image: 'image_id',
+            make_master: 'm_id',
+            product_image: 'product_id'
         };
 
-        async function fetchData(proc) {
-            currentProc = proc;
+        async function loadDropdownOptions() {
             try {
+                const [catRes, makeRes] = await Promise.all([
+                    fetch('/api/data', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ proc_name: 'category', opr: 'SELECT' })
+                    }).then(r => r.json()),
+                    fetch('/api/data', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ proc_name: 'make_master', opr: 'SELECT' })
+                    }).then(r => r.json())
+                ]);
+
+                categoriesList = catRes.data || [];
+                makeMasterList = makeRes.data || [];
+
+                categoriesMap = {};
+                categoriesList.forEach(c => {
+                    if (c.category_id !== undefined && c.name) {
+                        categoriesMap[c.category_id] = c.name;
+                    }
+                });
+
+                makeMasterMap = {};
+                makeMasterList.forEach(m => {
+                    if (m.m_id !== undefined && m.type) {
+                        makeMasterMap[m.m_id] = m.type;
+                    }
+                });
+
+                populateSelectOptions('product_category_select', categoriesList, 'category_id', 'name', 'Select Category');
+                populateSelectOptions('product_make_select', makeMasterList, 'm_id', 'type', 'Select Make (Optional)');
+            } catch (err) {
+                console.error('Failed to load dropdown options:', err);
+            }
+        }
+
+        function populateSelectOptions(selectId, items, valueKey, textKey, defaultText) {
+            const selectEl = document.getElementById(selectId);
+            if (!selectEl) return;
+            const currentVal = selectEl.value;
+            let html = `<option value="">${defaultText}</option>`;
+            items.forEach(item => {
+                html += `<option value="${item[valueKey]}">${item[textKey]}</option>`;
+            });
+            selectEl.innerHTML = html;
+            if (currentVal) {
+                selectEl.value = currentVal;
+            }
+        }
+
+        function navigate(procName) {
+            activeEntity = procName;
+            editId = null;
+
+            // Update active nav button
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            // Update titles
+            const cleanName = procName.replace('_', ' ').toUpperCase();
+            document.getElementById('pageTitle').innerText = cleanName;
+            const btnAdd = document.getElementById('btnAddText');
+            if (btnAdd) btnAdd.innerText = `+ Add ${cleanName.slice(0, -1)}`;
+
+            loadData();
+        }
+
+        async function loadData() {
+            try {
+                await loadDropdownOptions();
                 const res = await fetch('/api/data', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ proc_name: proc, opr: 'SELECT' })
+                    body: JSON.stringify({ proc_name: activeEntity, opr: 'SELECT' })
                 });
                 const result = await res.json();
                 currentRows = result.data || [];
                 renderTable(currentRows);
             } catch (err) {
-                alert('Failed to load data: ' + err.message);
+                showToast('Failed to load table: ' + err.message, true);
             }
-        }
-
-        function switchTab(proc) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('tabTitle').innerText = proc.toUpperCase().replace('_', ' ');
-            fetchData(proc);
         }
 
         function renderTable(rows) {
@@ -334,75 +862,115 @@
             tbody.innerHTML = '';
 
             if (!rows || rows.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#64748b; padding:24px;">No records found.</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding: 40px; color: var(--text-muted);">
+          No records present in ${activeEntity}. Click "+ Add" to create one.
+        </td></tr>`;
                 return;
             }
 
             const headers = Object.keys(rows[0]);
-            let headHTML = '<tr>';
-            headers.forEach(h => headHTML += `<th>${h}</th>`);
-            headHTML += '<th style="text-align:right">Actions</th></tr>';
-            thead.innerHTML = headHTML;
+            let headRow = '<tr>';
+            headers.forEach(h => {
+                let colTitle = h.replace('_', ' ');
+                if (activeEntity === 'product') {
+                    if (h === 'category_id') colTitle = 'Category Name';
+                    if (h === 'm_id') colTitle = 'Make Master';
+                }
+                headRow += `<th>${colTitle}</th>`;
+            });
+            headRow += '<th style="text-align:right">Actions</th></tr>';
+            thead.innerHTML = headRow;
 
             rows.forEach(row => {
-                let rowHTML = '<tr>';
+                let rowHtml = '<tr>';
                 headers.forEach(h => {
-                    let val = row[h] !== null ? row[h] : '-';
+                    let val = row[h] !== null && row[h] !== undefined ? row[h] : '-';
                     if (h.toLowerCase().includes('url') && val !== '-') {
-                        rowHTML += `<td><img src="${val}" class="img-thumb" onerror="this.src='https://via.placeholder.com/48?text=N/A'"/></td>`;
+                        rowHtml += `<td><img src="${val}" class="img-thumb" onerror="this.src='https://via.placeholder.com/44x44/111827/9ca3af?text=N/A'"/></td>`;
+                    } else if (activeEntity === 'product' && h === 'category_id' && val !== '-') {
+                        const catName = categoriesMap[val] || val;
+                        rowHtml += `<td>${catName}</td>`;
+                    } else if (activeEntity === 'product' && h === 'm_id' && val !== '-') {
+                        const makeName = makeMasterMap[val] || val;
+                        rowHtml += `<td>${makeName}</td>`;
                     } else {
-                        rowHTML += `<td>${val}</td>`;
+                        rowHtml += `<td>${val}</td>`;
                     }
                 });
 
-                const idVal = row[SCHEMAS[currentProc].idKey];
-                rowHTML += `<td style="text-align:right">
-          ${currentProc !== 'product_image' ? `<button class="btn btn-edit" onclick="openEditModal(${idVal})">Edit</button>` : ''}
-          <button class="btn btn-delete" onclick="deleteRecord(${idVal}, ${row.image_id || null})">Delete</button>
+                const idVal = row[PK_MAP[activeEntity]];
+                rowHtml += `<td style="text-align:right">
+          ${activeEntity !== 'product_image' ? `<button class="btn-action-edit" onclick="openEditModal(${idVal})">Edit</button>` : ''}
+          <button class="btn-action-del" onclick="deleteRecord(${idVal}, ${row.image_id || null})">Delete</button>
         </td></tr>`;
-                tbody.innerHTML += rowHTML;
+                tbody.innerHTML += rowHtml;
             });
         }
 
-        function openAddModal() {
-            editingCondition = null;
-            document.getElementById('modalTitle').innerText = 'Add ' + currentProc.replace('_', ' ');
-            buildFormFields({});
-            document.getElementById('modalOverlay').style.display = 'flex';
+        // Modal Handlers
+        async function openAddModal() {
+            editId = null;
+            hideAllModals();
+
+            await loadDropdownOptions();
+
+            const modalEl = document.getElementById(`modal_${activeEntity}`);
+            const formEl = document.getElementById(`form_${activeEntity}`);
+            formEl.reset();
+
+            document.getElementById(`modalTitle_${activeEntity}`).innerText = `Add ${activeEntity.replace('_', ' ')}`;
+            modalEl.style.display = 'flex';
+
+            const overlay = document.getElementById('modalContainer');
+            overlay.style.display = 'flex';
+            setTimeout(() => overlay.classList.add('show'), 10);
         }
 
-        function openEditModal(id) {
-            editingCondition = id;
-            const row = currentRows.find(r => r[SCHEMAS[currentProc].idKey] == id);
-            document.getElementById('modalTitle').innerText = 'Edit ' + currentProc.replace('_', ' ') + ` (#${id})`;
-            buildFormFields(row || {});
-            document.getElementById('modalOverlay').style.display = 'flex';
-        }
+        async function openEditModal(id) {
+            editId = id;
+            hideAllModals();
 
-        function buildFormFields(initialData) {
-            const container = document.getElementById('formFields');
-            container.innerHTML = '';
+            await loadDropdownOptions();
 
-            SCHEMAS[currentProc].fields.forEach(f => {
-                const val = initialData[f.name] !== undefined && initialData[f.name] !== null ? initialData[f.name] : '';
-                let fieldHTML = `<div class="form-group"><label>${f.label}${f.required ? ' *' : ''}</label>`;
+            const modalEl = document.getElementById(`modal_${activeEntity}`);
+            const formEl = document.getElementById(`form_${activeEntity}`);
+            formEl.reset();
 
-                if (f.type === 'textarea') {
-                    fieldHTML += `<textarea name="${f.name}" ${f.required ? 'required' : ''} rows="3">${val}</textarea>`;
-                } else {
-                    fieldHTML += `<input type="${f.type}" name="${f.name}" value="${val}" ${f.required ? 'required' : ''} />`;
-                }
+            const row = currentRows.find(r => r[PK_MAP[activeEntity]] == id);
+            if (row) {
+                Object.keys(row).forEach(key => {
+                    if (formEl.elements[key]) {
+                        formEl.elements[key].value = row[key] !== null ? row[key] : '';
+                    }
+                });
+            }
 
-                fieldHTML += `</div>`;
-                container.innerHTML += fieldHTML;
-            });
+            document.getElementById(`modalTitle_${activeEntity}`).innerText = `Edit ${activeEntity.replace('_', ' ')} (#${id})`;
+            modalEl.style.display = 'flex';
+
+            const overlay = document.getElementById('modalContainer');
+            overlay.style.display = 'flex';
+            setTimeout(() => overlay.classList.add('show'), 10);
         }
 
         function closeModal() {
-            document.getElementById('modalOverlay').style.display = 'none';
+            const overlay = document.getElementById('modalContainer');
+            overlay.classList.remove('show');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                hideAllModals();
+            }, 250);
         }
 
-        async function handleFormSubmit(e) {
+        function hideAllModals() {
+            ['product', 'category', 'image', 'make_master', 'product_image'].forEach(name => {
+                const el = document.getElementById(`modal_${name}`);
+                if (el) el.style.display = 'none';
+            });
+        }
+
+        // Form Submit Handler
+        async function submitForm(e, entity) {
             e.preventDefault();
             const formData = new FormData(e.target);
             const table_values = {};
@@ -414,10 +982,10 @@
             });
 
             const payload = {
-                proc_name: currentProc,
-                opr: editingCondition ? 'EDIT' : 'ADD',
+                proc_name: entity,
+                opr: editId ? 'EDIT' : 'ADD',
                 table_values: table_values,
-                condition: editingCondition ? String(editingCondition) : null
+                condition: editId ? String(editId) : null
             };
 
             try {
@@ -426,25 +994,32 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+
                 const result = await res.json();
                 if (!result.success) throw new Error(result.status || result.error);
+
+                showToast(`${entity.replace('_', ' ')} saved successfully!`);
                 closeModal();
-                fetchData(currentProc);
+                if (entity === 'category' || entity === 'make_master') {
+                    await loadDropdownOptions();
+                }
+                loadData();
             } catch (err) {
-                alert('Operation failed: ' + err.message);
+                showToast(err.message, true);
             }
         }
 
+        // Delete Handler
         async function deleteRecord(id, imageId) {
-            if (!confirm('Are you sure you want to delete this record?')) return;
+            if (!confirm(`Are you sure you want to permanently delete this ${activeEntity} record?`)) return;
 
             const payload = {
-                proc_name: currentProc,
+                proc_name: activeEntity,
                 opr: 'DELETE',
                 condition: String(id)
             };
 
-            if (currentProc === 'product_image' && imageId) {
+            if (activeEntity === 'product_image' && imageId) {
                 payload.table_values = { product_id: id, image_id: imageId };
             }
 
@@ -454,16 +1029,112 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+
                 const result = await res.json();
                 if (!result.success) throw new Error(result.status || result.error);
-                fetchData(currentProc);
+
+                showToast(`Record deleted successfully.`);
+                if (activeEntity === 'category' || activeEntity === 'make_master') {
+                    await loadDropdownOptions();
+                }
+                loadData();
             } catch (err) {
-                alert('Delete failed: ' + err.message);
+                showToast(err.message, true);
             }
         }
 
+        // File Import Pipeline
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const fileName = file.name.toLowerCase();
+            showToast(`Parsing ${file.name}...`);
+
+            try {
+                let rows = [];
+
+                if (fileName.endsWith('.csv') || fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                    const data = await file.arrayBuffer();
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    rows = XLSX.utils.sheet_to_json(firstSheet);
+                } else if (fileName.endsWith('.docx')) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const result = await mammoth.convertToHtml({ arrayBuffer });
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = result.value;
+
+                    const table = tempDiv.querySelector('table');
+                    if (!table) throw new Error('No table found in Word document.');
+
+                    const trs = Array.from(table.querySelectorAll('tr'));
+                    const headers = Array.from(trs[0].querySelectorAll('th, td')).map(c => c.innerText.trim());
+
+                    for (let i = 1; i < trs.length; i++) {
+                        const cells = Array.from(trs[i].querySelectorAll('td')).map(c => c.innerText.trim());
+                        const obj = {};
+                        headers.forEach((h, idx) => {
+                            if (cells[idx] !== undefined && cells[idx] !== '') {
+                                obj[h] = !isNaN(cells[idx]) ? Number(cells[idx]) : cells[idx];
+                            }
+                        });
+                        rows.push(obj);
+                    }
+                }
+
+                if (rows.length === 0) throw new Error('No valid data rows found in file.');
+
+                let success = 0;
+                for (const row of rows) {
+                    if (activeEntity === 'product') {
+                        if (!row.category_id && (row.category_name || row['Category Name'] || row.category || row.Category)) {
+                            const catName = (row.category_name || row['Category Name'] || row.category || row.Category).toString().trim().toLowerCase();
+                            const foundCat = categoriesList.find(c => c.name && c.name.toString().trim().toLowerCase() === catName);
+                            if (foundCat) row.category_id = foundCat.category_id;
+                        }
+                        if (!row.m_id && (row.make_type || row['Make Type'] || row.make || row.Make)) {
+                            const makeName = (row.make_type || row['Make Type'] || row.make || row.Make).toString().trim().toLowerCase();
+                            const foundMake = makeMasterList.find(m => m.type && m.type.toString().trim().toLowerCase() === makeName);
+                            if (foundMake) row.m_id = foundMake.m_id;
+                        }
+                    }
+
+                    const res = await fetch('/api/data', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            proc_name: activeEntity,
+                            opr: 'ADD',
+                            table_values: row
+                        })
+                    });
+                    const resData = await res.json();
+                    if (resData.success) success++;
+                }
+
+                showToast(`Import completed: ${success} of ${rows.length} rows inserted.`);
+                event.target.value = '';
+                loadData();
+
+            } catch (err) {
+                showToast('Import Error: ' + err.message, true);
+                event.target.value = '';
+            }
+        }
+
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.className = `toast show ${isError ? 'toast-error' : 'toast-success'}`;
+            toast.innerHTML = `<i class="ph-bold ${isError ? 'ph-warning-circle' : 'ph-check-circle'}"></i> <span>${msg}</span>`;
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3500);
+        }
+
         // Initial load
-        fetchData('product');
+        loadData();
     </script>
 </body>
 
