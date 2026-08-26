@@ -5,12 +5,11 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 
-// Single unified route for all stored procedure operations
 app.post('/api/data', async (req, res) => {
     try {
         const { proc_name, opr, table_values, condition } = req.body;
 
-        // 1. Basic Parameter Check
+        // 1. Mandatory Input Validation
         if (!proc_name || !opr) {
             return res.status(400).json({
                 success: false,
@@ -18,13 +17,19 @@ app.post('/api/data', async (req, res) => {
             });
         }
 
-        // 2. Format JSON payload for @JSONstr
+        // 2. Wrap Payload into Expected JSON Structure
         const jsonStr = table_values ? JSON.stringify({ table_values }) : null;
 
-        // 3. Connect and Execute Stored Procedure
+        // 3. Database Connection & Execution
         const pool = await poolPromise;
-        const request = pool.request();
+        if (!pool) {
+            return res.status(500).json({
+                success: false,
+                error: 'Database connection is not available.'
+            });
+        }
 
+        const request = pool.request();
         request.input('proc_name', sql.NVarChar(50), proc_name);
         request.input('Opr', sql.NVarChar(10), opr);
         request.input('JSONstr', sql.NVarChar(sql.MAX), jsonStr);
@@ -32,21 +37,28 @@ app.post('/api/data', async (req, res) => {
 
         const result = await request.execute('dbo.SP_GETDATA');
 
-        // 4. Parse Return Sets & Status
+        // 4. Response Status Extraction
         const recordsets = result.recordsets;
-        const statusRecord = recordsets[recordsets.length - 1];
+        const statusRecord = recordsets.length > 0 ? recordsets[recordsets.length - 1] : null;
         const status = statusRecord && statusRecord[0] ? statusRecord[0].Response_Status : 'OK';
 
-        // Check if SP returned an error status string
-        if (typeof status === 'string' && (status.startsWith('ERROR') || status.startsWith('VALIDATION') || status.startsWith('SECURITY') || status.startsWith('DATABASE'))) {
+        // 5. Handle Validation / Schema / SP Thrown Errors
+        if (typeof status === 'string' && (
+            status.startsWith('ERROR') ||
+            status.startsWith('VALIDATION') ||
+            status.startsWith('SECURITY') ||
+            status.startsWith('DATABASE') ||
+            status.startsWith('Not Found') ||
+            status.startsWith('Constraint Error')
+        )) {
             return res.status(400).json({
                 success: false,
                 status: status
             });
         }
 
-        // Capture returned query rows (if any)
-        const data = recordsets.length > 1 ? recordsets[0] : null;
+        // Extract primary data output (if any rows returned)
+        const data = recordsets.length > 1 ? recordsets[0] : (recordsets.length === 1 && !recordsets[0][0]?.Response_Status ? recordsets[0] : null);
 
         return res.status(200).json({
             success: true,

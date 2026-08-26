@@ -221,3 +221,88 @@ EXEC SP_GETDATA
             "actual_cost": 2200.00
         }
     }';
+
+USE SilverHouse;
+GO
+
+-- Add Make Types
+EXEC dbo.SP_GETDATA 
+    @proc_name = 'make_master', 
+    @Opr = 'ADD', 
+    @JSONstr = '{"table_values": {"type": "Handmade"}}';
+
+EXEC dbo.SP_GETDATA 
+    @proc_name = 'make_master', 
+    @Opr = 'ADD', 
+    @JSONstr = '{"table_values": {"type": "Machine Crafted"}}';
+
+EXEC dbo.SP_GETDATA 
+    @proc_name = 'make_master', 
+    @Opr = 'ADD', 
+    @JSONstr = '{"table_values": {"type": "Laser Cut"}}';
+
+-- View All Make Records
+EXEC dbo.SP_GETDATA 
+    @proc_name = 'make_master', 
+    @Opr = 'SELECT';
+
+
+-- Add Image URLs
+EXEC dbo.SP_GETDATA 
+    @proc_name = 'image', 
+    @Opr = 'ADD', 
+    @JSONstr = '{"table_values": {"image_url": "https://cdn.silverhouse.com/products/bangle-set-front.jpg"}}';
+
+EXEC dbo.SP_GETDATA 
+    @proc_name = 'image', 
+    @Opr = 'ADD', 
+    @JSONstr = '{"table_values": {"image_url": "https://cdn.silverhouse.com/products/bangle-set-angle.jpg"}}';
+
+EXEC dbo.SP_GETDATA 
+    @proc_name = 'image', 
+    @Opr = 'ADD', 
+    @JSONstr = '{"table_values": {"image_url": "https://cdn.silverhouse.com/products/cufflinks-luxury.jpg"}}';
+
+EXEC dbo.SP_GETDATA 
+    @proc_name = 'image', 
+    @Opr = 'ADD', 
+    @JSONstr = '{"table_values": {"image_url": "https://cdn.silverhouse.com/products/silver-bowl-999.jpg"}}';
+
+-- View All Images
+EXEC dbo.SP_GETDATA 
+    @proc_name = 'image', 
+    @Opr = 'SELECT';
+
+-- Map multiple images to Product 1
+EXEC dbo.SP_GETDATA 
+    @proc_name = 'product_image', 
+    @Opr = 'ADD', 
+    @JSONstr = '{"table_values": {"product_id": 102, "image_id": 502}}';
+
+EXEC dbo.SP_GETDATA 
+    @proc_name = 'product_image', 
+    @Opr = 'ADD', 
+    @JSONstr = '{"table_values": {"product_id": 103, "image_id": 502}}';
+
+-- Map image to Product 2
+EXEC dbo.SP_GETDATA 
+    @proc_name = 'product_image', 
+    @Opr = 'ADD', 
+    @JSONstr = '{"table_values": {"product_id": 104, "image_id": 503}}';
+
+-- Map image to Product 3
+EXEC dbo.SP_GETDATA 
+    @proc_name = 'product_image', 
+    @Opr = 'ADD', 
+    @JSONstr = '{"table_values": {"product_id": 105, "image_id": 504}}';
+
+-- View all images linked specifically to Product ID 1
+EXEC dbo.SP_GETDATA 
+    @proc_name = 'product_image', 
+    @Opr = 'SELECT', 
+    @Condition = '103';
+
+-- View all product-image mappings across the store
+EXEC dbo.SP_GETDATA 
+    @proc_name = 'product_image', 
+    @Opr = 'SELECT';

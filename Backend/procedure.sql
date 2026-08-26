@@ -6,6 +6,8 @@ IF OBJECT_ID('dbo.SP_GETDATA', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_GETDATA;
 IF OBJECT_ID('dbo.SP_product', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_product;
 IF OBJECT_ID('dbo.SP_category', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_category;
 IF OBJECT_ID('dbo.SP_image', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_image;
+IF OBJECT_ID('dbo.SP_make_master', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_make_master;
+IF OBJECT_ID('dbo.SP_product_image', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_product_image;
 GO
 
 -- =========================================================================
@@ -405,29 +407,268 @@ BEGIN
 END;
 GO
 
+
 -- =========================================================================
--- PROCEDURE 4: SP_GETDATA (Dispatcher with Point 5 TRY...CATCH)
+-- PROCEDURE 4: SP_make_master
+-- =========================================================================
+
+USE SilverHouse;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.SP_make_master
+    @Opr       NVARCHAR(10),
+    @JSONstr   NVARCHAR(MAX) = NULL,
+    @Condition NVARCHAR(MAX) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @TargetId INT = TRY_CAST(@Condition AS INT);
+    DECLARE @NewMakeId INT;
+    DECLARE @Type VARCHAR(50);
+
+    -- Extract JSON fields
+    IF @JSONstr IS NOT NULL AND ISJSON(@JSONstr) > 0
+    BEGIN
+        SELECT
+            @Type = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.type')));
+    END
+
+    -- Existence Check for EDIT / DELETE
+    IF @Opr IN ('EDIT', 'DELETE')
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM dbo.make_master WHERE m_id = @TargetId)
+        BEGIN
+            RAISERROR('Not Found: Make entry with ID %d does not exist.', 16, 1, @TargetId);
+            RETURN;
+        END
+    END
+
+    -- SELECT
+    IF @Opr = 'SELECT'
+    BEGIN
+        IF @TargetId IS NOT NULL AND @TargetId > 0
+            SELECT m_id, [type] FROM dbo.make_master WHERE m_id = @TargetId;
+        ELSE
+            SELECT m_id, [type] FROM dbo.make_master;
+    END
+
+    -- ADD
+    ELSE IF @Opr = 'ADD'
+    BEGIN
+        IF @Type IS NULL OR LEN(@Type) = 0
+        BEGIN
+            RAISERROR('Validation Error: type cannot be blank.', 16, 1);
+            RETURN;
+        END
+
+        IF EXISTS (SELECT 1 FROM dbo.make_master WHERE [type] = @Type)
+        BEGIN
+            RAISERROR('Validation Error: Type "%s" already exists in make_master.', 16, 1, @Type);
+            RETURN;
+        END
+
+        SELECT @NewMakeId = ISNULL(MAX(m_id), 0) + 1 FROM dbo.make_master;
+
+        INSERT INTO dbo.make_master (m_id, [type])
+        VALUES (@NewMakeId, @Type);
+
+        SELECT @NewMakeId AS NewMakeId, 'Make entry added successfully' AS [Message];
+    END
+
+    -- EDIT
+    ELSE IF @Opr = 'EDIT'
+    BEGIN
+        IF @Type IS NULL OR LEN(@Type) = 0
+        BEGIN
+            RAISERROR('Validation Error: type cannot be blank on update.', 16, 1);
+            RETURN;
+        END
+
+        IF EXISTS (SELECT 1 FROM dbo.make_master WHERE [type] = @Type AND m_id <> @TargetId)
+        BEGIN
+            RAISERROR('Validation Error: Type "%s" already exists.', 16, 1, @Type);
+            RETURN;
+        END
+
+        UPDATE dbo.make_master
+        SET [type] = @Type
+        WHERE m_id = @TargetId;
+
+        SELECT @TargetId AS MakeId, 'Make entry updated successfully' AS [Message];
+    END
+
+    -- DELETE
+    ELSE IF @Opr = 'DELETE'
+    BEGIN
+        IF EXISTS (SELECT 1 FROM dbo.product WHERE m_id = @TargetId)
+        BEGIN
+            RAISERROR('Constraint Error: Cannot delete make entry because products reference it.', 16, 1);
+            RETURN;
+        END
+
+        DELETE FROM dbo.make_master WHERE m_id = @TargetId;
+        SELECT @TargetId AS MakeId, 'Make entry deleted successfully' AS [Message];
+    END
+END;
+GO
+
+
+-- =========================================================================
+-- PROCEDURE 5: SP_product_image
+-- =========================================================================
+USE SilverHouse;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.SP_product_image
+    @Opr       NVARCHAR(10),
+    @JSONstr   NVARCHAR(MAX) = NULL,
+    @Condition NVARCHAR(MAX) = NULL -- Can be product_id for filtering
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @TargetProductId INT = TRY_CAST(@Condition AS INT);
+    DECLARE @ProductId INT;
+    DECLARE @ImageId INT;
+
+    -- Extract JSON fields
+    IF @JSONstr IS NOT NULL AND ISJSON(@JSONstr) > 0
+    BEGIN
+        SELECT
+            @ProductId = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.product_id') AS INT),
+            @ImageId   = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.image_id') AS INT);
+    END
+
+    -- If condition was passed, use it as fallback for ProductId
+    IF @ProductId IS NULL AND @TargetProductId IS NOT NULL
+        SET @ProductId = @TargetProductId;
+
+    -- SELECT
+    IF @Opr = 'SELECT'
+    BEGIN
+        IF @TargetProductId IS NOT NULL AND @TargetProductId > 0
+        BEGIN
+            SELECT 
+                pi.product_id,
+                p.title AS product_name,
+                pi.image_id,
+                img.image_url
+            FROM dbo.product_image pi
+            INNER JOIN dbo.product p ON pi.product_id = p.product_id
+            INNER JOIN dbo.[image] img ON pi.image_id = img.image_id
+            WHERE pi.product_id = @TargetProductId;
+        END
+        ELSE
+        BEGIN
+            SELECT 
+                pi.product_id,
+                p.title AS product_name,
+                pi.image_id,
+                img.image_url
+            FROM dbo.product_image pi
+            INNER JOIN dbo.product p ON pi.product_id = p.product_id
+            INNER JOIN dbo.[image] img ON pi.image_id = img.image_id;
+        END
+    END
+
+    -- ADD
+    ELSE IF @Opr = 'ADD'
+    BEGIN
+        IF @ProductId IS NULL OR @ProductId <= 0
+        BEGIN
+            RAISERROR('Validation Error: A valid product_id is required.', 16, 1);
+            RETURN;
+        END
+
+        IF @ImageId IS NULL OR @ImageId <= 0
+        BEGIN
+            RAISERROR('Validation Error: A valid image_id is required.', 16, 1);
+            RETURN;
+        END
+
+        -- FK Validation
+        IF NOT EXISTS (SELECT 1 FROM dbo.product WHERE product_id = @ProductId)
+        BEGIN
+            RAISERROR('Validation Error: Product ID %d does not exist.', 16, 1, @ProductId);
+            RETURN;
+        END
+
+        IF NOT EXISTS (SELECT 1 FROM dbo.[image] WHERE image_id = @ImageId)
+        BEGIN
+            RAISERROR('Validation Error: Image ID %d does not exist.', 16, 1, @ImageId);
+            RETURN;
+        END
+
+        -- Composite PK Duplicate Check
+        IF EXISTS (SELECT 1 FROM dbo.product_image WHERE product_id = @ProductId AND image_id = @ImageId)
+        BEGIN
+            RAISERROR('Validation Error: This image is already mapped to the specified product.', 16, 1);
+            RETURN;
+        END
+
+        INSERT INTO dbo.product_image (product_id, image_id)
+        VALUES (@ProductId, @ImageId);
+
+        SELECT @ProductId AS ProductId, @ImageId AS ImageId, 'Product image mapped successfully' AS [Message];
+    END
+
+    -- DELETE
+    ELSE IF @Opr = 'DELETE'
+    BEGIN
+        -- If both product_id and image_id provided, delete exact record
+        IF @ProductId IS NOT NULL AND @ImageId IS NOT NULL
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM dbo.product_image WHERE product_id = @ProductId AND image_id = @ImageId)
+            BEGIN
+                RAISERROR('Not Found: Mapping for Product ID %d and Image ID %d does not exist.', 16, 1, @ProductId, @ImageId);
+                RETURN;
+            END
+
+            DELETE FROM dbo.product_image WHERE product_id = @ProductId AND image_id = @ImageId;
+            SELECT @ProductId AS ProductId, @ImageId AS ImageId, 'Mapping removed successfully' AS [Message];
+        END
+        -- If only product_id is provided via Condition, remove all images linked to that product
+        ELSE IF @TargetProductId IS NOT NULL
+        BEGIN
+            DELETE FROM dbo.product_image WHERE product_id = @TargetProductId;
+            SELECT @TargetProductId AS ProductId, 'All images unmapped for product' AS [Message];
+        END
+        ELSE
+        BEGIN
+            RAISERROR('Validation Error: product_id and image_id are required for delete.', 16, 1);
+            RETURN;
+        END
+    END
+    ELSE
+    BEGIN
+        RAISERROR('Validation Error: Operation "%s" is not supported for product_image.', 16, 1, @Opr);
+        RETURN;
+    END
+END;
+GO
+
+-- =========================================================================
+-- PROCEDURE 6: SP_GETDATA 
 -- =========================================================================
 USE SilverHouse;
 GO
 
 CREATE OR ALTER PROCEDURE dbo.SP_GETDATA
-    @proc_name   NVARCHAR(50),          -- Target entity/table
-    @Opr         NVARCHAR(10),          -- 'ADD', 'EDIT', 'DELETE', 'SELECT'
-    @JSONstr     NVARCHAR(MAX) = NULL,  -- JSON formatted string
-    @Condition   NVARCHAR(255) = NULL   -- Primary Key / ID
+    @proc_name   NVARCHAR(50),
+    @Opr         NVARCHAR(10),
+    @JSONstr     NVARCHAR(MAX) = NULL,
+    @Condition   NVARCHAR(MAX) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Internal response variable
     DECLARE @Response NVARCHAR(MAX) = 'OK';
 
-    -- Normalize inputs
     SET @proc_name = LOWER(LTRIM(RTRIM(@proc_name)));
     SET @Opr = UPPER(LTRIM(RTRIM(@Opr)));
 
-    -- 1. Procedure/Table Name Validation
+    -- 1. Table/Procedure Name Validation
     IF @proc_name IS NULL OR @proc_name = ''
     BEGIN
         SET @Response = 'ERROR: proc_name cannot be empty.';
@@ -435,7 +676,8 @@ BEGIN
         RETURN;
     END
 
-    IF @proc_name NOT IN ('product', 'category', 'image')
+    -- Whitelist including new tables
+    IF @proc_name NOT IN ('product', 'category', 'image', 'make_master', 'product_image')
     BEGIN
         SET @Response = 'SECURITY ERROR: Unauthorized or unsupported proc_name "' + @proc_name + '".';
         SELECT @Response AS [Response_Status];
@@ -457,29 +699,18 @@ BEGIN
         RETURN;
     END
 
-    -- 3. JSON Payload Validation
-    IF @Opr IN ('ADD', 'EDIT')
+    -- 3. JSON Payload Validation (Required for ADD)
+    IF @Opr = 'ADD'
     BEGIN
         IF @JSONstr IS NULL OR ISJSON(@JSONstr) = 0
         BEGIN
-            SET @Response = 'VALIDATION ERROR: A valid JSON payload (JSONstr) is required for ADD/EDIT operations.';
+            SET @Response = 'VALIDATION ERROR: A valid JSON payload (JSONstr) is required for ADD operations.';
             SELECT @Response AS [Response_Status];
             RETURN;
         END
     END
 
-    -- 4. Condition / ID Validation
-    IF @Opr IN ('EDIT', 'DELETE')
-    BEGIN
-        IF @Condition IS NULL OR TRY_CAST(@Condition AS INT) IS NULL OR CAST(@Condition AS INT) <= 0
-        BEGIN
-            SET @Response = 'VALIDATION ERROR: A valid positive integer ID/Condition is required for ' + @Opr + ' operations.';
-            SELECT @Response AS [Response_Status];
-            RETURN;
-        END
-    END
-
-    -- 5. Execution of Target Stored Procedure inside TRY...CATCH
+    -- 4. Execution with TRY...CATCH
     BEGIN TRY
         IF @proc_name = 'product'
             EXEC dbo.SP_product @Opr = @Opr, @JSONstr = @JSONstr, @Condition = @Condition;
@@ -487,6 +718,10 @@ BEGIN
             EXEC dbo.SP_category @Opr = @Opr, @JSONstr = @JSONstr, @Condition = @Condition;
         ELSE IF @proc_name = 'image'
             EXEC dbo.SP_image @Opr = @Opr, @JSONstr = @JSONstr, @Condition = @Condition;
+        ELSE IF @proc_name = 'make_master'
+            EXEC dbo.SP_make_master @Opr = @Opr, @JSONstr = @JSONstr, @Condition = @Condition;
+        ELSE IF @proc_name = 'product_image'
+            EXEC dbo.SP_product_image @Opr = @Opr, @JSONstr = @JSONstr, @Condition = @Condition;
 
         SET @Response = 'OK';
         SELECT @Response AS [Response_Status];
