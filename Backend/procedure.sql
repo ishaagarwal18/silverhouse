@@ -13,10 +13,13 @@ GO
 -- =========================================================================
 -- PROCEDURE 1: SP_product
 -- =========================================================================
-CREATE PROCEDURE dbo.SP_product
+USE SilverHouse;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.SP_product
     @Opr       NVARCHAR(10),
     @JSONstr   NVARCHAR(MAX) = NULL,
-    @Condition NVARCHAR(MAX) = NULL
+    @Condition NVARCHAR(255) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -70,7 +73,7 @@ BEGIN
         END
     END
 
-    -- CRUD ROUTING
+    -- SELECT
     IF @Opr = 'SELECT'
     BEGIN
         IF @TargetId IS NOT NULL AND @TargetId > 0
@@ -79,6 +82,7 @@ BEGIN
             SELECT * FROM dbo.product;
     END
 
+    -- ADD
     ELSE IF @Opr = 'ADD'
     BEGIN
         IF @CategoryId IS NULL
@@ -153,6 +157,7 @@ BEGIN
         SELECT @NewProductId AS NewProductId, 'Product added successfully' AS [Message];
     END
 
+    -- EDIT
     ELSE IF @Opr = 'EDIT'
     BEGIN
         IF @CategoryId IS NOT NULL AND NOT EXISTS (SELECT 1 FROM dbo.category WHERE category_id = @CategoryId)
@@ -185,20 +190,27 @@ BEGIN
         SELECT @TargetId AS ProductId, 'Product updated successfully' AS [Message];
     END
 
+    -- DELETE (Cascading delete of linked relationships)
     ELSE IF @Opr = 'DELETE'
     BEGIN
-        IF EXISTS (SELECT 1 FROM dbo.product_image WHERE product_id = @TargetId)
-        BEGIN
-            RAISERROR('Constraint Error: Cannot delete product because images are linked to it in dbo.product_image.', 16, 1);
-            RETURN;
-        END
+        BEGIN TRANSACTION;
+        BEGIN TRY
+            -- 1. Delete mapping links in junction table
+            DELETE FROM dbo.product_image WHERE product_id = @TargetId;
 
-        DELETE FROM dbo.product WHERE product_id = @TargetId;
-        SELECT @TargetId AS ProductId, 'Product deleted successfully' AS [Message];
+            -- 2. Delete the actual product
+            DELETE FROM dbo.product WHERE product_id = @TargetId;
+
+            COMMIT TRANSACTION;
+            SELECT @TargetId AS ProductId, 'Product and its linked records deleted successfully' AS [Message];
+        END TRY
+        BEGIN CATCH
+            IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+            THROW;
+        END CATCH
     END
 END;
 GO
-
 -- =========================================================================
 -- PROCEDURE 2: SP_category
 -- =========================================================================

@@ -1,15 +1,28 @@
 const express = require('express');
+const path = require('path');
 const { sql, poolPromise } = require('./db');
 require('dotenv').config();
 
 const app = express();
 app.use(express.json());
 
+// Serve static HTML and dashboard assets
+app.use(express.static(path.join(__dirname, 'public')));
+
+// If user navigates via browser address bar, show the UI dashboard
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/api/data', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Single unified endpoint handling all operations from forms & API
 app.post('/api/data', async (req, res) => {
     try {
         const { proc_name, opr, table_values, condition } = req.body;
 
-        // 1. Mandatory Input Validation
         if (!proc_name || !opr) {
             return res.status(400).json({
                 success: false,
@@ -17,10 +30,8 @@ app.post('/api/data', async (req, res) => {
             });
         }
 
-        // 2. Wrap Payload into Expected JSON Structure
         const jsonStr = table_values ? JSON.stringify({ table_values }) : null;
 
-        // 3. Database Connection & Execution
         const pool = await poolPromise;
         if (!pool) {
             return res.status(500).json({
@@ -37,12 +48,10 @@ app.post('/api/data', async (req, res) => {
 
         const result = await request.execute('dbo.SP_GETDATA');
 
-        // 4. Response Status Extraction
         const recordsets = result.recordsets;
         const statusRecord = recordsets.length > 0 ? recordsets[recordsets.length - 1] : null;
         const status = statusRecord && statusRecord[0] ? statusRecord[0].Response_Status : 'OK';
 
-        // 5. Handle Validation / Schema / SP Thrown Errors
         if (typeof status === 'string' && (
             status.startsWith('ERROR') ||
             status.startsWith('VALIDATION') ||
@@ -57,7 +66,6 @@ app.post('/api/data', async (req, res) => {
             });
         }
 
-        // Extract primary data output (if any rows returned)
         const data = recordsets.length > 1 ? recordsets[0] : (recordsets.length === 1 && !recordsets[0][0]?.Response_Status ? recordsets[0] : null);
 
         return res.status(200).json({
@@ -78,4 +86,5 @@ app.post('/api/data', async (req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
+    console.log(`Open in browser: http://localhost:${PORT}/api/data`);
 });

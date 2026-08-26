@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SilverHouse Admin Dashboard</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --primary: #1e293b;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --danger: #dc2626;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 24px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 10px 18px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary);
+            color: #fff;
+        }
+
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-edit {
+            background: #e0f2fe;
+            color: #0284c7;
+            margin-right: 6px;
+        }
+
+        .btn-delete {
+            background: #fee2e2;
+            color: var(--danger);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th,
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        th {
+            background: #f1f5f9;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .img-thumb {
+            width: 48px;
+            height: 48px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 520px;
+            padding: 24px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h2>SilverHouse Management Studio</h2>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('product')">Products</button>
+        <button class="tab-btn" onclick="switchTab('category')">Categories</button>
+        <button class="tab-btn" onclick="switchTab('image')">Images</button>
+        <button class="tab-btn" onclick="switchTab('make_master')">Make Types</button>
+        <button class="tab-btn" onclick="switchTab('product_image')">Product Images</button>
+    </div>
+
+    <div class="action-bar">
+        <span id="tabTitle" style="font-weight: 600; font-size: 16px;">Products</span>
+        <button class="btn btn-primary" onclick="openAddModal()">+ Add New</button>
+    </div>
+
+    <div class="card">
+        <table>
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Dynamic Modal Form -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <span id="modalTitle">Add Record</span>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="dynamicForm" onsubmit="handleFormSubmit(event)">
+                <div id="formFields"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" style="background:#e2e8f0" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="modalSaveBtn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentProc = 'product';
+        let currentRows = [];
+        let editingCondition = null;
+
+        const SCHEMAS = {
+            product: {
+                idKey: 'product_id',
+                fields: [
+                    { name: 'category_id', label: 'Category ID', type: 'number', required: true },
+                    { name: 'm_id', label: 'Make ID (m_id)', type: 'number' },
+                    { name: 'title', label: 'Title / Name', type: 'text', required: true },
+                    { name: 'purity', label: 'Purity (e.g. 92.5)', type: 'text', required: true },
+                    { name: 'weight', label: 'Weight (e.g. 10.5 gm)', type: 'text', required: true },
+                    { name: 'description', label: 'Description', type: 'textarea', required: true },
+                    { name: 'price', label: 'Price (₹)', type: 'number', required: true },
+                    { name: 'discount', label: 'Discount (%)', type: 'number' },
+                    { name: 'quantity', label: 'Quantity', type: 'number', required: true },
+                    { name: 'ideal_for', label: 'Ideal For', type: 'text', required: true },
+                    { name: 'packaging', label: 'Packaging', type: 'text' },
+                    { name: 'labour_cost', label: 'Labour Cost (₹)', type: 'number' },
+                    { name: 'actual_cost', label: 'Actual Cost (₹)', type: 'number', required: true }
+                ]
+            },
+            category: {
+                idKey: 'category_id',
+                fields: [
+                    { name: 'name', label: 'Category Name', type: 'text', required: true },
+                    { name: 'description', label: 'Description', type: 'textarea', required: true },
+                    { name: 'slug', label: 'Slug', type: 'text', required: true },
+                    { name: 'ideal_for', label: 'Ideal For', type: 'text' }
+                ]
+            },
+            image: {
+                idKey: 'image_id',
+                fields: [
+                    { name: 'image_url', label: 'Image URL', type: 'text', required: true }
+                ]
+            },
+            make_master: {
+                idKey: 'm_id',
+                fields: [
+                    { name: 'type', label: 'Type (e.g. Handmade)', type: 'text', required: true }
+                ]
+            },
+            product_image: {
+                idKey: 'product_id',
+                fields: [
+                    { name: 'product_id', label: 'Product ID', type: 'number', required: true },
+                    { name: 'image_id', label: 'Image ID', type: 'number', required: true }
+                ]
+            }
+        };
+
+        async function fetchData(proc) {
+            currentProc = proc;
+            try {
+                const res = await fetch('/api/data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ proc_name: proc, opr: 'SELECT' })
+                });
+                const result = await res.json();
+                currentRows = result.data || [];
+                renderTable(currentRows);
+            } catch (err) {
+                alert('Failed to load data: ' + err.message);
+            }
+        }
+
+        function switchTab(proc) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tabTitle').innerText = proc.toUpperCase().replace('_', ' ');
+            fetchData(proc);
+        }
+
+        function renderTable(rows) {
+            const thead = document.getElementById('tableHead');
+            const tbody = document.getElementById('tableBody');
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+
+            if (!rows || rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#64748b; padding:24px;">No records found.</td></tr>';
+                return;
+            }
+
+            const headers = Object.keys(rows[0]);
+            let headHTML = '<tr>';
+            headers.forEach(h => headHTML += `<th>${h}</th>`);
+            headHTML += '<th style="text-align:right">Actions</th></tr>';
+            thead.innerHTML = headHTML;
+
+            rows.forEach(row => {
+                let rowHTML = '<tr>';
+                headers.forEach(h => {
+                    let val = row[h] !== null ? row[h] : '-';
+                    if (h.toLowerCase().includes('url') && val !== '-') {
+                        rowHTML += `<td><img src="${val}" class="img-thumb" onerror="this.src='https://via.placeholder.com/48?text=N/A'"/></td>`;
+                    } else {
+                        rowHTML += `<td>${val}</td>`;
+                    }
+                });
+
+                const idVal = row[SCHEMAS[currentProc].idKey];
+                rowHTML += `<td style="text-align:right">
+          ${currentProc !== 'product_image' ? `<button class="btn btn-edit" onclick="openEditModal(${idVal})">Edit</button>` : ''}
+          <button class="btn btn-delete" onclick="deleteRecord(${idVal}, ${row.image_id || null})">Delete</button>
+        </td></tr>`;
+                tbody.innerHTML += rowHTML;
+            });
+        }
+
+        function openAddModal() {
+            editingCondition = null;
+            document.getElementById('modalTitle').innerText = 'Add ' + currentProc.replace('_', ' ');
+            buildFormFields({});
+            document.getElementById('modalOverlay').style.display = 'flex';
+        }
+
+        function openEditModal(id) {
+            editingCondition = id;
+            const row = currentRows.find(r => r[SCHEMAS[currentProc].idKey] == id);
+            document.getElementById('modalTitle').innerText = 'Edit ' + currentProc.replace('_', ' ') + ` (#${id})`;
+            buildFormFields(row || {});
+            document.getElementById('modalOverlay').style.display = 'flex';
+        }
+
+        function buildFormFields(initialData) {
+            const container = document.getElementById('formFields');
+            container.innerHTML = '';
+
+            SCHEMAS[currentProc].fields.forEach(f => {
+                const val = initialData[f.name] !== undefined && initialData[f.name] !== null ? initialData[f.name] : '';
+                let fieldHTML = `<div class="form-group"><label>${f.label}${f.required ? ' *' : ''}</label>`;
+
+                if (f.type === 'textarea') {
+                    fieldHTML += `<textarea name="${f.name}" ${f.required ? 'required' : ''} rows="3">${val}</textarea>`;
+                } else {
+                    fieldHTML += `<input type="${f.type}" name="${f.name}" value="${val}" ${f.required ? 'required' : ''} />`;
+                }
+
+                fieldHTML += `</div>`;
+                container.innerHTML += fieldHTML;
+            });
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').style.display = 'none';
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const table_values = {};
+
+            formData.forEach((value, key) => {
+                if (value.trim() !== '') {
+                    table_values[key] = !isNaN(value) && value !== '' ? Number(value) : value;
+                }
+            });
+
+            const payload = {
+                proc_name: currentProc,
+                opr: editingCondition ? 'EDIT' : 'ADD',
+                table_values: table_values,
+                condition: editingCondition ? String(editingCondition) : null
+            };
+
+            try {
+                const res = await fetch('/api/data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                if (!result.success) throw new Error(result.status || result.error);
+                closeModal();
+                fetchData(currentProc);
+            } catch (err) {
+                alert('Operation failed: ' + err.message);
+            }
+        }
+
+        async function deleteRecord(id, imageId) {
+            if (!confirm('Are you sure you want to delete this record?')) return;
+
+            const payload = {
+                proc_name: currentProc,
+                opr: 'DELETE',
+                condition: String(id)
+            };
+
+            if (currentProc === 'product_image' && imageId) {
+                payload.table_values = { product_id: id, image_id: imageId };
+            }
+
+            try {
+                const res = await fetch('/api/data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                if (!result.success) throw new Error(result.status || result.error);
+                fetchData(currentProc);
+            } catch (err) {
+                alert('Delete failed: ' + err.message);
+            }
+        }
+
+        // Initial load
+        fetchData('product');
+    </script>
+</body>
+
+</html>
