@@ -510,9 +510,11 @@
                 const result = await res.json();
                 if (!result.success) throw new Error(result.status || result.error);
 
+                const targetId = table_values.product_id;
+
                 showToast('Product Image link saved successfully!');
                 setTimeout(() => {
-                    window.location.href = '/index.html?entity=product_image';
+                    window.location.href = `/index.html?entity=product_image${targetId ? `&highlightId=${targetId}&action=add` : ''}`;
                 }, 1000);
             } catch (err) {
                 showToast(err.message, true);

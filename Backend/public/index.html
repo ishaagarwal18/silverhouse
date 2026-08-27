@@ -535,6 +535,108 @@
                 transform: translateY(0);
             }
         }
+
+        /* =========================================
+           ROW HIGHLIGHTING FOR CRUD OPERATIONS
+        ========================================= */
+        tr.row-highlight-edit {
+            animation: rowPulseEdit 3s ease-in-out infinite alternate;
+            border-left: 5px solid #6366f1 !important;
+            position: relative;
+        }
+
+        tr.row-highlight-add {
+            animation: rowPulseAdd 3s ease-in-out infinite alternate;
+            border-left: 5px solid #10b981 !important;
+            position: relative;
+        }
+
+        tr.row-highlight-restock {
+            animation: rowPulseRestock 3s ease-in-out infinite alternate;
+            border-left: 5px solid #0284c7 !important;
+            position: relative;
+        }
+
+        tr.row-highlight-delete {
+            animation: rowPulseDelete 0.5s ease-out forwards !important;
+            border-left: 5px solid #ef4444 !important;
+        }
+
+        @keyframes rowPulseEdit {
+            0% {
+                background-color: rgba(99, 102, 241, 0.25);
+                box-shadow: inset 0 0 12px rgba(99, 102, 241, 0.3);
+            }
+            100% {
+                background-color: rgba(99, 102, 241, 0.08);
+                box-shadow: inset 0 0 4px rgba(99, 102, 241, 0.1);
+            }
+        }
+
+        @keyframes rowPulseAdd {
+            0% {
+                background-color: rgba(16, 185, 129, 0.25);
+                box-shadow: inset 0 0 12px rgba(16, 185, 129, 0.3);
+            }
+            100% {
+                background-color: rgba(16, 185, 129, 0.08);
+                box-shadow: inset 0 0 4px rgba(16, 185, 129, 0.1);
+            }
+        }
+
+        @keyframes rowPulseRestock {
+            0% {
+                background-color: rgba(2, 132, 199, 0.25);
+                box-shadow: inset 0 0 12px rgba(2, 132, 199, 0.3);
+            }
+            100% {
+                background-color: rgba(2, 132, 199, 0.08);
+                box-shadow: inset 0 0 4px rgba(2, 132, 199, 0.1);
+            }
+        }
+
+        @keyframes rowPulseDelete {
+            0% {
+                background-color: rgba(239, 68, 68, 0.4);
+                opacity: 1;
+            }
+            100% {
+                background-color: rgba(239, 68, 68, 0.1);
+                opacity: 0.2;
+                transform: scaleY(0.8);
+            }
+        }
+
+        .action-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-edit {
+            background: rgba(99, 102, 241, 0.15);
+            color: #6366f1;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .badge-add {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-restock {
+            background: rgba(2, 132, 199, 0.15);
+            color: #0284c7;
+            border: 1px solid rgba(2, 132, 199, 0.3);
+        }
     </style>
 </head>
 
@@ -590,7 +692,7 @@
     <main class="main-wrapper">
         <header class="top-bar">
             <div class="title-box">
-                <h1 id="pageTitle">Products</h1>
+                <h1 id="pageTitle">PRODUCT</h1>
                 <p id="pageDescription">Manage, search, and edit database records</p>
             </div>
 
@@ -609,7 +711,7 @@
                 </button>
                 <button class="btn btn-primary" onclick="openAddModal()">
                     <i class="ph-bold ph-plus"></i>
-                    <span id="btnAddText">Add Product</span>
+                    <span>Add Product</span>
                 </button>
             </div>
         </header>
@@ -631,6 +733,7 @@
         let activeEntity = 'product';
         let currentRows = [];
         let editId = null;
+        let highlightMap = {};
 
         let categoriesList = [];
         let makeMasterList = [];
@@ -701,6 +804,7 @@
         function navigate(procName) {
             activeEntity = procName;
             editId = null;
+            highlightMap = {};
 
             // Update active nav button
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
@@ -744,6 +848,7 @@
                 return;
             }
 
+            const pkField = PK_MAP[activeEntity];
             const headers = Object.keys(rows[0]);
             let headRow = '<tr>';
             headers.forEach(h => {
@@ -751,36 +856,71 @@
                 if (activeEntity === 'product') {
                     if (h === 'category_id') colTitle = 'Category Name';
                     if (h === 'm_id') colTitle = 'Make Master';
+                    if (h === 'title') colTitle = 'Product Name';
                 }
                 headRow += `<th>${colTitle}</th>`;
             });
             headRow += '<th style="text-align:right">Actions</th></tr>';
             thead.innerHTML = headRow;
 
+            let firstHighlightedRow = null;
+
             rows.forEach(row => {
-                let rowHtml = '<tr>';
-                headers.forEach(h => {
+                const idVal = row[pkField];
+                const actionType = highlightMap[idVal] || (idVal !== undefined && highlightMap[String(idVal)]);
+
+                let rowClass = '';
+                let badgeHtml = '';
+                if (actionType === 'edit') {
+                    rowClass = 'row-highlight-edit';
+                    badgeHtml = `<span class="action-badge badge-edit"><i class="ph-bold ph-pencil-simple"></i> Edited</span>`;
+                } else if (actionType === 'add') {
+                    rowClass = 'row-highlight-add';
+                    badgeHtml = `<span class="action-badge badge-add"><i class="ph-bold ph-sparkle"></i> Added</span>`;
+                } else if (actionType === 'restock') {
+                    rowClass = 'row-highlight-restock';
+                    badgeHtml = `<span class="action-badge badge-restock"><i class="ph-bold ph-lightning"></i> Restocked</span>`;
+                }
+
+                let rowHtml = `<tr data-id="${idVal}" class="${rowClass}">`;
+                headers.forEach((h, idx) => {
                     let val = row[h] !== null && row[h] !== undefined ? row[h] : '-';
+                    const showBadge = (idx === 0 && badgeHtml);
+
                     if (h.toLowerCase().includes('url') && val !== '-') {
-                        rowHtml += `<td><img src="${val}" class="img-thumb" onerror="this.src='https://via.placeholder.com/44x44/111827/9ca3af?text=N/A'"/></td>`;
+                        rowHtml += `<td><img src="${val}" class="img-thumb" onerror="this.src='https://via.placeholder.com/44x44/111827/9ca3af?text=N/A'"/>${showBadge ? badgeHtml : ''}</td>`;
                     } else if (activeEntity === 'product' && h === 'category_id' && val !== '-') {
                         const catName = categoriesMap[val] || val;
-                        rowHtml += `<td>${catName}</td>`;
+                        rowHtml += `<td>${catName}${showBadge ? badgeHtml : ''}</td>`;
                     } else if (activeEntity === 'product' && h === 'm_id' && val !== '-') {
                         const makeName = makeMasterMap[val] || val;
-                        rowHtml += `<td>${makeName}</td>`;
+                        rowHtml += `<td>${makeName}${showBadge ? badgeHtml : ''}</td>`;
                     } else {
-                        rowHtml += `<td>${val}</td>`;
+                        rowHtml += `<td>${val}${showBadge ? badgeHtml : ''}</td>`;
                     }
                 });
 
-                const idVal = row[PK_MAP[activeEntity]];
+                const rowId = row[PK_MAP[activeEntity]];
                 rowHtml += `<td style="text-align:right">
-          ${activeEntity !== 'product_image' ? `<button class="btn-action-edit" onclick="openEditModal(${idVal})">Edit</button>` : ''}
-          <button class="btn-action-del" onclick="deleteRecord(${idVal}, ${row.image_id || null})">Delete</button>
+          ${activeEntity !== 'product_image' ? `<button class="btn-action-edit" onclick="openEditModal(${rowId})">Edit</button>` : ''}
+          <button class="btn-action-del" onclick="deleteRecord(${rowId}, ${row.image_id || null})">Delete</button>
         </td></tr>`;
-                tbody.innerHTML += rowHtml;
+
+                const trElem = document.createElement('tbody');
+                trElem.innerHTML = rowHtml;
+                const trNode = trElem.firstElementChild;
+                tbody.appendChild(trNode);
+
+                if (rowClass && !firstHighlightedRow) {
+                    firstHighlightedRow = trNode;
+                }
             });
+
+            if (firstHighlightedRow) {
+                setTimeout(() => {
+                    firstHighlightedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 150);
+            }
         }
 
         const FORM_PAGES = {
@@ -818,6 +958,18 @@
                 document.getElementById('pageTitle').innerText = cleanName;
                 const btnAdd = document.getElementById('btnAddText');
                 if (btnAdd) btnAdd.innerText = `+ Add ${cleanName.slice(0, -1)}`;
+            }
+
+            const highlightId = urlParams.get('highlightId') || urlParams.get('highlight');
+            const actionParam = (urlParams.get('action') || 'edit').toLowerCase();
+            if (highlightId) {
+                highlightMap[highlightId] = actionParam;
+                // Clean URL query parameter without page reload
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.delete('highlightId');
+                newUrl.searchParams.delete('highlight');
+                newUrl.searchParams.delete('action');
+                window.history.replaceState({}, '', newUrl);
             }
         }
 
@@ -865,6 +1017,13 @@
         async function deleteRecord(id, imageId) {
             if (!confirm(`Are you sure you want to permanently delete this ${activeEntity} record?`)) return;
 
+            // Visual feedback: Highlight row red before deleting
+            const rowElem = document.querySelector(`tr[data-id="${id}"]`);
+            if (rowElem) {
+                rowElem.className = 'row-highlight-delete';
+                await new Promise(r => setTimeout(r, 400));
+            }
+
             const payload = {
                 proc_name: activeEntity,
                 opr: 'DELETE',
@@ -886,6 +1045,7 @@
                 if (!result.success) throw new Error(result.status || result.error);
 
                 showToast(`Record deleted successfully.`);
+                delete highlightMap[id];
                 if (activeEntity === 'category' || activeEntity === 'make_master') {
                     await loadDropdownOptions();
                 }
@@ -951,8 +1111,17 @@
                 let restocked = 0;
                 let failed = 0;
 
-                // 3. Intelligent Upsert / Restock Routing
+                let newHighlightMap = {};
+
+                // 3. Intelligent Upsert / Restock Routing & Remark Annotation
                 for (const row of rows) {
+                    // Alias 'Product Name' / 'product_name' to 'title'
+                    if (row['Product Name'] !== undefined && row.title === undefined) {
+                        row.title = row['Product Name'];
+                    } else if (row['product_name'] !== undefined && row.title === undefined) {
+                        row.title = row['product_name'];
+                    }
+
                     const idVal = row[pkField];
 
                     // Check if ID exists in currently loaded database records
@@ -976,35 +1145,70 @@
                         condition: condition
                     };
 
-                    const res = await fetch('/api/data', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
+                    try {
+                        const res = await fetch('/api/data', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
 
-                    const resData = await res.json();
-                    if (resData.success) {
-                        if (!existsInDb) {
-                            inserted++;
-                        } else if (opr === 'RESTOCK') {
-                            restocked++;
+                        const resData = await res.json();
+                        if (resData.success) {
+                            let targetId = idVal;
+                            if (!targetId && resData.data && resData.data.length > 0) {
+                                const firstObj = resData.data[0];
+                                targetId = firstObj.NewProductId || firstObj.NewCategoryId || firstObj.NewImageId || firstObj.NewMId || firstObj[Object.keys(firstObj)[0]];
+                            }
+
+                            if (!existsInDb) {
+                                inserted++;
+                                row['Remark'] = 'Added';
+                                if (targetId) newHighlightMap[targetId] = 'add';
+                            } else if (opr === 'RESTOCK') {
+                                restocked++;
+                                row['Remark'] = 'Restocked';
+                                if (targetId) newHighlightMap[targetId] = 'restock';
+                            } else {
+                                updated++;
+                                row['Remark'] = 'Edited';
+                                if (targetId) newHighlightMap[targetId] = 'edit';
+                            }
                         } else {
-                            updated++;
+                            failed++;
+                            const errorMsg = resData.status || resData.error || 'Operation Failed';
+                            row['Remark'] = errorMsg;
+                            console.error(`Row Failed (${JSON.stringify(row)}):`, errorMsg);
                         }
-                    } else {
+                    } catch (rowErr) {
                         failed++;
-                        console.error(`Row Failed (${JSON.stringify(row)}):`, resData.status || resData.error);
+                        row['Remark'] = rowErr.message || 'Processing Error';
+                        console.error(`Row Exception:`, rowErr);
                     }
+                }
+
+                highlightMap = newHighlightMap;
+
+                // 4. Export & Download Result File with Remark Column
+                if (rows.length > 0) {
+                    const ws = XLSX.utils.json_to_sheet(rows);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Import Results");
+
+                    const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                    const exportExt = fileName.endsWith('.csv') ? 'csv' : 'xlsx';
+                    const exportFileName = `processed_${baseName}.${exportExt}`;
+
+                    XLSX.writeFile(wb, exportFileName);
                 }
 
                 const summary = [
                     inserted > 0 ? `Added: ${inserted}` : null,
-                    updated > 0 ? `Updated: ${updated}` : null,
+                    updated > 0 ? `Edited: ${updated}` : null,
                     restocked > 0 ? `Restocked: ${restocked}` : null,
                     failed > 0 ? `Errors: ${failed}` : null
                 ].filter(Boolean).join(', ');
 
-                showToast(`Import Completed! ${summary || 'No changes made.'}`);
+                showToast(`Import Completed! Downloaded result file with Remarks. (${summary || 'No changes made'})`);
                 event.target.value = '';
                 loadData();
 

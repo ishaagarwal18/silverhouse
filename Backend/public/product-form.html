@@ -454,7 +454,7 @@
                             </select>
                         </div>
                         <div class="form-group full-width">
-                            <label>Product Title *</label>
+                            <label>Product Name *</label>
                             <input type="text" name="title" required placeholder="e.g. Floral Silver Locket" />
                         </div>
                         <div class="form-group">
@@ -648,9 +648,15 @@
                 const result = await res.json();
                 if (!result.success) throw new Error(result.status || result.error);
 
+                let targetId = editId;
+                if (!targetId && result.data && result.data.length > 0) {
+                    targetId = result.data[0].NewProductId || result.data[0].product_id || table_values.product_id;
+                }
+                const action = editId ? 'edit' : 'add';
+
                 showToast('Product saved successfully!');
                 setTimeout(() => {
-                    window.location.href = '/index.html?entity=product';
+                    window.location.href = `/index.html?entity=product${targetId ? `&highlightId=${targetId}&action=${action}` : ''}`;
                 }, 1000);
             } catch (err) {
                 showToast(err.message, true);

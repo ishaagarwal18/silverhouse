@@ -1,0 +1,4 @@
+product_id,category_id,m_id,title,purity,weight,description,price,discount,quantity,ideal_for,packaging,labour_cost,actual_cost
+1,1,1,Peacock Temple Silver Kada,92.5 Sterling,38.00 gm,Intricate antique finish openable kada,9499,10,8,Women,Royal Velvet Box,1400,6800
+104,1,1,Handcrafted Silver Lotus Payal (Pair),92.5 Sterling,28.50 gm,Traditional ghungroo floral anklet pair,5699,0,12,Women,Pouch Box,800,4200
+105,1,1,999 Pure Silver Mahavira Coin,99.9 Pure,20.00 gm,High relief embossed holy coin with tamper seal,2999,0,30,ALL,Blister Card,250,2300

@@ -570,9 +570,15 @@
                 const result = await res.json();
                 if (!result.success) throw new Error(result.status || result.error);
 
+                let targetId = editId;
+                if (!targetId && result.data && result.data.length > 0) {
+                    targetId = result.data[0].NewCategoryId || result.data[0].category_id || table_values.category_id;
+                }
+                const action = editId ? 'edit' : 'add';
+
                 showToast('Category saved successfully!');
                 setTimeout(() => {
-                    window.location.href = '/index.html?entity=category';
+                    window.location.href = `/index.html?entity=category${targetId ? `&highlightId=${targetId}&action=${action}` : ''}`;
                 }, 1000);
             } catch (err) {
                 showToast(err.message, true);
