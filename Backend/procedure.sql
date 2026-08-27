@@ -1,7 +1,7 @@
 USE SilverHouse;
 GO
 
--- 1. DROP EXISTING PROCEDURES
+-- 1. DROP ALL EXISTING PROCEDURES
 IF OBJECT_ID('dbo.SP_GETDATA', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_GETDATA;
 IF OBJECT_ID('dbo.SP_product', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_product;
 IF OBJECT_ID('dbo.SP_category', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_category;
@@ -24,6 +24,7 @@ BEGIN
     DECLARE @TargetId INT = TRY_CAST(@Condition AS INT);
     DECLARE @NewProductId INT;
     
+    DECLARE @InputProductId INT;
     DECLARE @CategoryId INT;
     DECLARE @MakeId INT;
     DECLARE @Purity VARCHAR(30);
@@ -42,19 +43,20 @@ BEGIN
     IF @JSONstr IS NOT NULL AND ISJSON(@JSONstr) > 0
     BEGIN
         SELECT
-            @CategoryId  = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.category_id') AS INT),
-            @MakeId      = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.m_id') AS INT),
-            @Purity      = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.purity'))),
-            @Weight      = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.weight'))),
-            @Title       = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.title'))),
-            @Description = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.description'))),
-            @Price       = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.price') AS DECIMAL(18,2)),
-            @Discount    = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.discount') AS DECIMAL(4,2)),
-            @Quantity    = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.quantity') AS INT),
-            @IdealFor    = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.ideal_for'))),
-            @Packaging   = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.packaging'))),
-            @LabourCost  = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.labour_cost') AS DECIMAL(18,2)),
-            @ActualCost  = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.actual_cost') AS DECIMAL(18,2));
+            @InputProductId = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.product_id') AS INT),
+            @CategoryId     = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.category_id') AS INT),
+            @MakeId         = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.m_id') AS INT),
+            @Purity         = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.purity'))),
+            @Weight         = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.weight'))),
+            @Title          = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.title'))),
+            @Description    = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.description'))),
+            @Price          = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.price') AS DECIMAL(18,2)),
+            @Discount       = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.discount') AS DECIMAL(4,2)),
+            @Quantity       = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.quantity') AS INT),
+            @IdealFor       = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.ideal_for'))),
+            @Packaging      = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.packaging'))),
+            @LabourCost     = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.labour_cost') AS DECIMAL(18,2)),
+            @ActualCost     = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.actual_cost') AS DECIMAL(18,2));
 
         IF @Title IS NULL OR @Title = ''
             SET @Title = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.name')));
@@ -70,7 +72,7 @@ BEGIN
         END
     END
 
-    -- CRUD ROUTING
+    -- SELECT
     IF @Opr = 'SELECT'
     BEGIN
         IF @TargetId IS NOT NULL AND @TargetId > 0
@@ -79,6 +81,7 @@ BEGIN
             SELECT * FROM dbo.product;
     END
 
+    -- ADD
     ELSE IF @Opr = 'ADD'
     BEGIN
         IF @CategoryId IS NULL
@@ -137,7 +140,20 @@ BEGIN
             RETURN;
         END
 
-        SELECT @NewProductId = ISNULL(MAX(product_id), 0) + 1 FROM dbo.product;
+        -- Check custom Product ID or generate new auto-increment
+        IF @InputProductId IS NOT NULL AND @InputProductId > 0
+        BEGIN
+            IF EXISTS (SELECT 1 FROM dbo.product WHERE product_id = @InputProductId)
+            BEGIN
+                RAISERROR('Validation Error: Product with ID %d already exists.', 16, 1, @InputProductId);
+                RETURN;
+            END
+            SET @NewProductId = @InputProductId;
+        END
+        ELSE
+        BEGIN
+            SELECT @NewProductId = ISNULL(MAX(product_id), 0) + 1 FROM dbo.product;
+        END
 
         INSERT INTO dbo.product (
             product_id, category_id, m_id, purity, [weight], 
@@ -152,7 +168,15 @@ BEGIN
 
         SELECT @NewProductId AS NewProductId, 'Product added successfully' AS [Message];
     END
+    ELSE IF @Opr = 'RESTOCK'
+    BEGIN
+        UPDATE dbo.product
+        SET quantity = quantity + ISNULL(@Quantity, 0)
+        WHERE product_id = @TargetId;
 
+        SELECT @TargetId AS ProductId, 'Stock restocked successfully' AS [Message];
+    END
+    -- EDIT
     ELSE IF @Opr = 'EDIT'
     BEGIN
         IF @CategoryId IS NOT NULL AND NOT EXISTS (SELECT 1 FROM dbo.category WHERE category_id = @CategoryId)
@@ -185,12 +209,11 @@ BEGIN
         SELECT @TargetId AS ProductId, 'Product updated successfully' AS [Message];
     END
 
-    -- DELETE: Cascading delete of linked records
+    -- DELETE (Cascade delete)
     ELSE IF @Opr = 'DELETE'
     BEGIN
         BEGIN TRANSACTION;
         BEGIN TRY
-            -- Temp table to track image_ids linked to this product
             DECLARE @ImagesToDelete TABLE (image_id INT);
 
             INSERT INTO @ImagesToDelete (image_id)
@@ -198,16 +221,13 @@ BEGIN
             FROM dbo.product_image 
             WHERE product_id = @TargetId;
 
-            -- 1. Remove junction relationships
             DELETE FROM dbo.product_image 
             WHERE product_id = @TargetId;
 
-            -- 2. Remove orphaned images not linked to any other product
             DELETE FROM dbo.[image]
             WHERE image_id IN (SELECT image_id FROM @ImagesToDelete)
               AND image_id NOT IN (SELECT image_id FROM dbo.product_image);
 
-            -- 3. Delete product
             DELETE FROM dbo.product 
             WHERE product_id = @TargetId;
 
@@ -221,7 +241,6 @@ BEGIN
     END
 END;
 GO
-
 -- =========================================================================
 -- PROCEDURE 2: SP_category
 -- =========================================================================
@@ -644,7 +663,10 @@ GO
 -- =========================================================================
 -- PROCEDURE 6: SP_GETDATA
 -- =========================================================================
-CREATE PROCEDURE dbo.SP_GETDATA
+USE SilverHouse;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.SP_GETDATA
     @proc_name   NVARCHAR(50),
     @Opr         NVARCHAR(10),
     @JSONstr     NVARCHAR(MAX) = NULL,
@@ -679,18 +701,19 @@ BEGIN
         RETURN;
     END
 
-    IF @Opr NOT IN ('ADD', 'EDIT', 'DELETE', 'SELECT')
+    -- Allow RESTOCK alongside standard CRUD operations
+    IF @Opr NOT IN ('ADD', 'EDIT', 'DELETE', 'SELECT', 'RESTOCK')
     BEGIN
-        SET @Response = 'VALIDATION ERROR: Invalid operation "' + @Opr + '". Allowed: ADD, EDIT, DELETE, SELECT.';
+        SET @Response = 'VALIDATION ERROR: Invalid operation "' + @Opr + '". Allowed: ADD, EDIT, DELETE, SELECT, RESTOCK.';
         SELECT @Response AS [Response_Status];
         RETURN;
     END
 
-    IF @Opr = 'ADD'
+    IF @Opr IN ('ADD', 'RESTOCK')
     BEGIN
         IF @JSONstr IS NULL OR ISJSON(@JSONstr) = 0
         BEGIN
-            SET @Response = 'VALIDATION ERROR: A valid JSON payload (JSONstr) is required for ADD operations.';
+            SET @Response = 'VALIDATION ERROR: A valid JSON payload (JSONstr) is required for ' + @Opr + ' operations.';
             SELECT @Response AS [Response_Status];
             RETURN;
         END

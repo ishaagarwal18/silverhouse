@@ -595,15 +595,21 @@
             </div>
 
             <div class="action-controls">
+                <select id="importModeSelect"
+                    style="background: var(--surface-card); color: #fff; border: 1px solid var(--border); padding: 9px 12px; border-radius: 8px; font-size: 13px; outline: none;">
+                    <option value="RESTOCK">⚡ Inward Stock Mode</option>
+                    <option value="EDIT">✏️ Overwrite Mode</option>
+                </select>
+
                 <input type="file" id="fileUploadInput" accept=".csv, .xlsx, .xls, .docx" style="display:none;"
                     onchange="handleFileUpload(event)" />
                 <button class="btn btn-secondary" onclick="document.getElementById('fileUploadInput').click()">
                     <i class="ph-bold ph-upload-simple"></i>
-                    <span>Import (Excel/Word/CSV)</span>
+                    <span>Import File</span>
                 </button>
                 <button class="btn btn-primary" onclick="openAddModal()">
                     <i class="ph-bold ph-plus"></i>
-                    <span>Add Product</span>
+                    <span id="btnAddText">Add Product</span>
                 </button>
             </div>
         </header>
@@ -900,12 +906,15 @@
             try {
                 let rows = [];
 
+                // 1. Parse CSV & Excel (.xlsx, .xls)
                 if (fileName.endsWith('.csv') || fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
                     const data = await file.arrayBuffer();
                     const workbook = XLSX.read(data, { type: 'array' });
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                     rows = XLSX.utils.sheet_to_json(firstSheet);
-                } else if (fileName.endsWith('.docx')) {
+                }
+                // 2. Parse Word (.docx) Table
+                else if (fileName.endsWith('.docx')) {
                     const arrayBuffer = await file.arrayBuffer();
                     const result = await mammoth.convertToHtml({ arrayBuffer });
                     const tempDiv = document.createElement('div');
@@ -915,6 +924,8 @@
                     if (!table) throw new Error('No table found in Word document.');
 
                     const trs = Array.from(table.querySelectorAll('tr'));
+                    if (trs.length < 2) throw new Error('Word table must have at least 1 header row and 1 data row.');
+
                     const headers = Array.from(trs[0].querySelectorAll('th, td')).map(c => c.innerText.trim());
 
                     for (let i = 1; i < trs.length; i++) {
@@ -931,35 +942,69 @@
 
                 if (rows.length === 0) throw new Error('No valid data rows found in file.');
 
-                let success = 0;
+                const pkField = PK_MAP[activeEntity];
+                const modeSelect = document.getElementById('importModeSelect');
+                const selectedMode = (modeSelect && activeEntity === 'product') ? modeSelect.value : 'EDIT';
+
+                let inserted = 0;
+                let updated = 0;
+                let restocked = 0;
+                let failed = 0;
+
+                // 3. Intelligent Upsert / Restock Routing
                 for (const row of rows) {
-                    if (activeEntity === 'product') {
-                        if (!row.category_id && (row.category_name || row['Category Name'] || row.category || row.Category)) {
-                            const catName = (row.category_name || row['Category Name'] || row.category || row.Category).toString().trim().toLowerCase();
-                            const foundCat = categoriesList.find(c => c.name && c.name.toString().trim().toLowerCase() === catName);
-                            if (foundCat) row.category_id = foundCat.category_id;
-                        }
-                        if (!row.m_id && (row.make_type || row['Make Type'] || row.make || row.Make)) {
-                            const makeName = (row.make_type || row['Make Type'] || row.make || row.Make).toString().trim().toLowerCase();
-                            const foundMake = makeMasterList.find(m => m.type && m.type.toString().trim().toLowerCase() === makeName);
-                            if (foundMake) row.m_id = foundMake.m_id;
-                        }
+                    const idVal = row[pkField];
+
+                    // Check if ID exists in currently loaded database records
+                    const existsInDb = idVal !== undefined && idVal !== null && idVal !== '' &&
+                        currentRows.some(r => r[pkField] == idVal);
+
+                    let opr = 'ADD';
+                    let condition = null;
+
+                    if (existsInDb) {
+                        opr = selectedMode; // 'RESTOCK' (adds quantity) or 'EDIT' (overwrites fields)
+                        condition = String(idVal);
+                    } else {
+                        opr = 'ADD';
                     }
+
+                    const payload = {
+                        proc_name: activeEntity,
+                        opr: opr,
+                        table_values: row,
+                        condition: condition
+                    };
 
                     const res = await fetch('/api/data', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            proc_name: activeEntity,
-                            opr: 'ADD',
-                            table_values: row
-                        })
+                        body: JSON.stringify(payload)
                     });
+
                     const resData = await res.json();
-                    if (resData.success) success++;
+                    if (resData.success) {
+                        if (!existsInDb) {
+                            inserted++;
+                        } else if (opr === 'RESTOCK') {
+                            restocked++;
+                        } else {
+                            updated++;
+                        }
+                    } else {
+                        failed++;
+                        console.error(`Row Failed (${JSON.stringify(row)}):`, resData.status || resData.error);
+                    }
                 }
 
-                showToast(`Import completed: ${success} of ${rows.length} rows inserted.`);
+                const summary = [
+                    inserted > 0 ? `Added: ${inserted}` : null,
+                    updated > 0 ? `Updated: ${updated}` : null,
+                    restocked > 0 ? `Restocked: ${restocked}` : null,
+                    failed > 0 ? `Errors: ${failed}` : null
+                ].filter(Boolean).join(', ');
+
+                showToast(`Import Completed! ${summary || 'No changes made.'}`);
                 event.target.value = '';
                 loadData();
 
@@ -968,7 +1013,6 @@
                 event.target.value = '';
             }
         }
-
         function showToast(msg, isError = false) {
             const toast = document.getElementById('toast');
             toast.className = `toast show ${isError ? 'toast-error' : 'toast-success'}`;
