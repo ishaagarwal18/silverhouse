@@ -1,5 +1,5 @@
-product_id,category_id,m_id,title,purity,weight,description,price,discount,quantity,ideal_for,packaging,labour_cost,actual_cost
-102,2,1,Lakshmi Ganesha Pure Silver Coin - Festive Edition,999 Fine Pure Silver,10 Grams,Special edition coin for Diwali puja,1850,0,50,ALL,Blister Card,150,1650
-103,3,2,Classic Silver Band - Smooth Mirror Finish,92.5 Sterling,5.40 gm,Updated polished sterling silver band,2199,8,30,ALL,Velvet Box,250,1100
-113,6,3,Modern Minimalist Silver Ear Cuff,92.5 Sterling,4.20 gm,Clip-on geometric silver ear cuff,1499,0,40,Women,Eco Box,200,950
-114,11,2,Pure Silver Lakshmi Charan Paduka,99.9 Pure,25.00 gm,Embossed silver holy feet for temple,3999,10,20,ALL,Velvet Display Box,400,2900
+product_id,category_id,m_id,title,purity,weight,description,price,discount,quantity,ideal_for,packaging,labour_cost,actual_cost,Remark
+102,2,1,Lakshmi Ganesha Pure Silver Coin - Festive Edition,999 Fine Pure Silver,10 Grams,Special edition coin for Diwali puja,1850,0,50,ALL,Blister Card,150,1650,Restocked
+103,3,2,Classic Silver Band - Smooth Mirror Finish,92.5 Sterling,5.40 gm,Updated polished sterling silver band,2199,8,30,ALL,Velvet Box,250,1100,Restocked
+113,6,3,Modern Minimalist Silver Ear Cuff,92.5 Sterling,4.20 gm,Clip-on geometric silver ear cuff,1499,0,40,Women,Eco Box,200,950,Restocked
+114,11,2,Pure Silver Lakshmi Charan Paduka,99.9 Pure,25.00 gm,Embossed silver holy feet for temple,3999,10,20,ALL,Velvet Display Box,400,2900,Restocked

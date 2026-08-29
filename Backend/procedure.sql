@@ -71,7 +71,7 @@ BEGIN
             BEGIN
                 SELECT TOP 1 @CategoryId = category_id 
                 FROM dbo.category 
-                WHERE LOWER(TRIM(name)) = LOWER(TRIM(@CategoryNameInput));
+                WHERE LOWER(LTRIM(RTRIM(name))) = LOWER(LTRIM(RTRIM(@CategoryNameInput)));
             END
         END
     END
@@ -114,45 +114,31 @@ BEGIN
             RETURN;
         END
         IF @Purity IS NULL OR LEN(@Purity) = 0
-        BEGIN
-            RAISERROR('Validation Error: purity cannot be blank.', 16, 1);
-            RETURN;
-        END
+            SET @Purity = '92.5 Sterling';
+
         IF @Weight IS NULL OR LEN(@Weight) = 0
-        BEGIN
-            RAISERROR('Validation Error: weight cannot be blank.', 16, 1);
-            RETURN;
-        END
+            SET @Weight = 'N/A';
+
         IF @Title IS NULL OR LEN(@Title) = 0
-        BEGIN
-            RAISERROR('Validation Error: title cannot be blank.', 16, 1);
-            RETURN;
-        END
+            SET @Title = 'Silver Product';
+
         IF @Description IS NULL OR LEN(@Description) = 0
-        BEGIN
-            RAISERROR('Validation Error: description cannot be blank.', 16, 1);
-            RETURN;
-        END
+            SET @Description = 'Silver Jewelry';
+
         IF @Price IS NULL OR @Price < 0
         BEGIN
             RAISERROR('Validation Error: price must be a valid non-negative number.', 16, 1);
             RETURN;
         END
+
         IF @Quantity IS NULL OR @Quantity < 0
-        BEGIN
-            RAISERROR('Validation Error: quantity must be a non-negative integer.', 16, 1);
-            RETURN;
-        END
+            SET @Quantity = 1;
+
         IF @IdealFor IS NULL OR LEN(@IdealFor) = 0
-        BEGIN
-            RAISERROR('Validation Error: ideal_for cannot be blank.', 16, 1);
-            RETURN;
-        END
+            SET @IdealFor = 'ALL';
+
         IF @ActualCost IS NULL OR @ActualCost < 0
-        BEGIN
-            RAISERROR('Validation Error: actual_cost must be a valid non-negative number.', 16, 1);
-            RETURN;
-        END
+            SET @ActualCost = ISNULL(@Price, 0.00);
 
         -- Check custom Product ID or generate new auto-increment
         IF @InputProductId IS NOT NULL AND @InputProductId > 0

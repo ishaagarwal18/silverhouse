@@ -1,0 +1,6 @@
+product_id,category_name,m_id,title,purity,weight,description,price,discount,quantity,ideal_for,packaging,labour_cost,actual_cost,category_id,Remark
+201,Silver Rings,1,Solitaire Zirconia Sterling Silver Ring,92.5 Sterling,3.80 gm,Classic four-prong solitaire silver engagement ring,2299,5,20,Women,Velvet Ring Box,250,1650,5,Added
+202,Pooja Articles & Idols,1,Celestial Crescent Moon Silver Pendant,92.5 Sterling,6.20 gm,Minimalist cubic zirconia encrusted moon necklace,3499,0,15,Women,Pouch Box,400,2400,,ERROR [50000]: Validation Error: category_id is required.
+203,Silver Chokers,1,Antique Floral Openable Silver Kada,92.5 Sterling,32.00 gm,Heavy handcrafted silver cuff with floral filigree work,8799,10,8,Women,Royal Velvet Box,1200,6200,,ERROR [50000]: Validation Error: category_id is required.
+204,Silver Earrings,1,Oxidised Peacock Chandbali Earrings,92.5 Sterling,14.50 gm,Traditional ethnic oxidised chandelier earrings with pearl drops,3199,0,25,Women,Earring Card,450,2100,8,Added
+205,"	Kids Silver Nazariya",1,999 Fine Silver Lotus Temple Coin (50g),99.9 Pure,50.00 gm,Tamper-proof blister packed investment grade bullion coin,4899,0,40,ALL,Blister Pack,180,4300,,ERROR [50000]: Validation Error: category_id is required.

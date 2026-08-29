@@ -1,0 +1,4 @@
+category_name,m_id,title,purity,weight,description,price,discount,quantity,ideal_for,packaging,labour_cost,actual_cost,Remark,category_id,product_id
+Silver Bangles,1,Heritage Filigree Silver Chandi Kada,92.5 Sterling,35.50 gm,Traditional handcrafted openable kada with antique finish,8999,5,12,Women,Royal Velvet Box,1200,6400,ERROR [50000]: Validation Error: category_id is required.,,
+Silver Payal & Anklets,1,Ghungroo Bridal Silver Payal Pair,92.5 Sterling,42.00 gm,Double layer traditional bridal payal with bells,9800,0,8,Women,Velvet Box,1500,7100,Added,12,115
+Silver Coins & Bars,1,Goddess Lakshmi Embossed Coin,99.9 Pure,10.00 gm,High purity festive investment silver coin,1750,0,50,ALL,Blister Card,150,1550,Added,15,116

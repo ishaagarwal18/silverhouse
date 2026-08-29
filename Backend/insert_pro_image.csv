@@ -1,0 +1,7 @@
+product_id,image_id,Remark
+201,509,ERROR [50000]: Validation Error: Image ID 601 does not exist.
+202,510,ERROR [50000]: Validation Error: Image ID 602 does not exist.
+203,511,ERROR [50000]: Validation Error: Image ID 603 does not exist.
+204,512,ERROR [50000]: Validation Error: Image ID 604 does not exist.
+205,513,ERROR [50000]: Validation Error: Image ID 605 does not exist.
+204,514,ERROR [50000]: Validation Error: Image ID 606 does not exist.

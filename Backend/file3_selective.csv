@@ -1,6 +1,6 @@
 product_id,category_id,price,discount,quantity,Remark
-102,2,1750,5,45,Edited
-103,7,1999,12,20,ERROR [50000]: Validation Error: category_id is required.
-104,5,1199,10,50,Edited
-105,14,5499,15,8,Edited
-106,15,2199,15,15,ERROR [50000]: Validation Error: category_id is required.
+102,2,1750,5,45,Restocked
+103,7,1999,12,20,Added
+104,5,1199,10,50,Restocked
+105,14,5499,15,8,Restocked
+106,15,2199,15,15,Added
