@@ -60,6 +60,20 @@ BEGIN
 
         IF @Title IS NULL OR @Title = ''
             SET @Title = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.name')));
+
+        IF @CategoryId IS NULL
+        BEGIN
+            DECLARE @CategoryNameInput NVARCHAR(100) = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.category_name')));
+            IF @CategoryNameInput IS NULL OR @CategoryNameInput = ''
+                SET @CategoryNameInput = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.category')));
+
+            IF @CategoryNameInput IS NOT NULL AND @CategoryNameInput <> ''
+            BEGIN
+                SELECT TOP 1 @CategoryId = category_id 
+                FROM dbo.category 
+                WHERE LOWER(TRIM(name)) = LOWER(TRIM(@CategoryNameInput));
+            END
+        END
     END
 
     -- Existence Check for EDIT / DELETE

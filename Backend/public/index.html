@@ -705,7 +705,7 @@
 
                 <input type="file" id="fileUploadInput" accept=".csv, .xlsx, .xls, .docx" style="display:none;"
                     onchange="handleFileUpload(event)" />
-                <button class="btn btn-secondary" onclick="document.getElementById('fileUploadInput').click()">
+                <button class="btn btn-secondary" onclick="triggerFileImport()">
                     <i class="ph-bold ph-upload-simple"></i>
                     <span>Import File</span>
                 </button>
@@ -767,9 +767,12 @@
                 makeMasterList = makeRes.data || [];
 
                 categoriesMap = {};
+                categoryNameToIdMap = {};
                 categoriesList.forEach(c => {
                     if (c.category_id !== undefined && c.name) {
                         categoriesMap[c.category_id] = c.name;
+                        categoryNameToIdMap[String(c.name).trim().toLowerCase()] = c.category_id;
+                        categoryNameToIdMap[String(c.name).trim()] = c.category_id;
                     }
                 });
 
@@ -1055,11 +1058,91 @@
             }
         }
 
-        // File Import Pipeline
+        const FIELD_ALIASES = {
+            product_id: ['product_id', 'productid', 'product id', 'id', 'p_id', 'pid'],
+            category_id: ['category_id', 'categoryid', 'category id', 'category_i', 'cat_id', 'catid'],
+            category_name: ['category_name', 'category name', 'categoryname'],
+            m_id: ['m_id', 'mid', 'make_id', 'make id', 'make_master', 'makemaster', 'make'],
+            title: ['title', 'product_name', 'product name', 'productname', 'name', 'title_name'],
+            purity: ['purity', 'silver_purity', 'purity_grade'],
+            weight: ['weight', 'item_weight', 'wt', 'weight_gm'],
+            description: ['description', 'desc', 'details', 'item_description'],
+            price: ['price', 'unit_price', 'mrp', 'rate', 'product_price'],
+            discount: ['discount', 'disc', 'discount_percent', 'discount_%'],
+            quantity: ['quantity', 'qty', 'stock', 'stock_qty', 'count'],
+            ideal_for: ['ideal_for', 'idealfor', 'ideal for', 'gender', 'target_audience'],
+            packaging: ['packaging', 'package', 'pack_type', 'box_type'],
+            labour_cost: ['labour_cost', 'labourcost', 'labour cost', 'making_charge', 'making_cost'],
+            actual_cost: ['actual_cost', 'actualcost', 'actual cost', 'cost_price', 'cost'],
+            image_id: ['image_id', 'imageid', 'image id', 'img_id'],
+            image_url: ['image_url', 'imageurl', 'image url', 'url', 'image', 'link']
+        };
+
+        function normalizeRowData(rawRow) {
+            const cleanObj = {};
+            Object.keys(rawRow).forEach(rawKey => {
+                const trimmedKey = rawKey.trim();
+                if (trimmedKey === 'Remark') return;
+
+                const lowerKey = trimmedKey.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                let matchedStandardField = null;
+
+                for (const [standardField, aliases] of Object.entries(FIELD_ALIASES)) {
+                    if (aliases.some(alias => lowerKey === alias.replace(/[^a-z0-9]/g, '_'))) {
+                        matchedStandardField = standardField;
+                        break;
+                    }
+                }
+
+                const finalKey = matchedStandardField || trimmedKey;
+                let val = rawRow[rawKey];
+                if (typeof val === 'string') val = val.trim();
+                if (val !== undefined && val !== null && val !== '') {
+                    cleanObj[finalKey] = (!isNaN(val) && val !== '') ? Number(val) : val;
+                }
+            });
+            return cleanObj;
+        }
+
+        // File Import Pipeline with Direct In-Place Disk Save
+        async function triggerFileImport() {
+            if ('showOpenFilePicker' in window) {
+                try {
+                    const [fileHandle] = await window.showOpenFilePicker({
+                        types: [{
+                            description: 'Data Files (.csv, .xlsx, .xls, .docx)',
+                            accept: {
+                                'text/csv': ['.csv'],
+                                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+                                'application/vnd.ms-excel': ['.xls'],
+                                'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+                            }
+                        }],
+                        multiple: false
+                    });
+
+                    if (fileHandle) {
+                        const file = await fileHandle.getFile();
+                        await processAndSaveFileInPlace(file, fileHandle);
+                    }
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        showToast('File selection error: ' + err.message, true);
+                    }
+                }
+            } else {
+                document.getElementById('fileUploadInput').click();
+            }
+        }
+
         async function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
+            await processAndSaveFileInPlace(file, null);
+            event.target.value = '';
+        }
 
+        async function processAndSaveFileInPlace(file, fileHandle = null) {
             const fileName = file.name.toLowerCase();
             showToast(`Parsing ${file.name}...`);
 
@@ -1106,6 +1189,21 @@
                 const modeSelect = document.getElementById('importModeSelect');
                 const selectedMode = (modeSelect && activeEntity === 'product') ? modeSelect.value : 'EDIT';
 
+                // 3. Refresh database records in real-time before checking existence
+                try {
+                    const freshRes = await fetch('/api/data', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ proc_name: activeEntity, opr: 'SELECT' })
+                    });
+                    const freshData = await freshRes.json();
+                    if (freshData.success && freshData.data) {
+                        currentRows = freshData.data;
+                    }
+                } catch (e) {
+                    console.error("Failed to refresh records prior to import:", e);
+                }
+
                 let inserted = 0;
                 let updated = 0;
                 let restocked = 0;
@@ -1113,16 +1211,32 @@
 
                 let newHighlightMap = {};
 
-                // 3. Intelligent Upsert / Restock Routing & Remark Annotation
+                // 4. Intelligent Upsert / Restock Routing & Remark Annotation
                 for (const row of rows) {
-                    // Alias 'Product Name' / 'product_name' to 'title'
-                    if (row['Product Name'] !== undefined && row.title === undefined) {
-                        row.title = row['Product Name'];
-                    } else if (row['product_name'] !== undefined && row.title === undefined) {
-                        row.title = row['product_name'];
+                    delete row.Remark; // Clear old Remark string from previous runs
+
+                    // Normalize headers & data values for DB payload
+                    const cleanTableValues = normalizeRowData(row);
+
+                    // If entity is product, resolve category_name to category_id
+                    if (activeEntity === 'product') {
+                        const catInput = cleanTableValues['category_name'] || cleanTableValues['category'];
+                        if (catInput && (cleanTableValues['category_id'] === undefined || isNaN(cleanTableValues['category_id']))) {
+                            const normKey = String(catInput).trim().toLowerCase();
+                            if (categoryNameToIdMap[normKey] !== undefined) {
+                                cleanTableValues['category_id'] = categoryNameToIdMap[normKey];
+                            } else if (categoryNameToIdMap[String(catInput).trim()] !== undefined) {
+                                cleanTableValues['category_id'] = categoryNameToIdMap[String(catInput).trim()];
+                            }
+                        }
                     }
 
-                    const idVal = row[pkField];
+                    // Ensure normalized key is present on row object
+                    Object.keys(cleanTableValues).forEach(k => {
+                        row[k] = cleanTableValues[k];
+                    });
+
+                    const idVal = cleanTableValues[pkField];
 
                     // Check if ID exists in currently loaded database records
                     const existsInDb = idVal !== undefined && idVal !== null && idVal !== '' &&
@@ -1141,7 +1255,7 @@
                     const payload = {
                         proc_name: activeEntity,
                         opr: opr,
-                        table_values: row,
+                        table_values: cleanTableValues,
                         condition: condition
                     };
 
@@ -1160,6 +1274,10 @@
                                 targetId = firstObj.NewProductId || firstObj.NewCategoryId || firstObj.NewImageId || firstObj.NewMId || firstObj[Object.keys(firstObj)[0]];
                             }
 
+                            if (targetId && (row[pkField] === undefined || row[pkField] === null || row[pkField] === '')) {
+                                row[pkField] = targetId;
+                            }
+
                             if (!existsInDb) {
                                 inserted++;
                                 row['Remark'] = 'Added';
@@ -1174,10 +1292,41 @@
                                 if (targetId) newHighlightMap[targetId] = 'edit';
                             }
                         } else {
-                            failed++;
-                            const errorMsg = resData.status || resData.error || 'Operation Failed';
-                            row['Remark'] = errorMsg;
-                            console.error(`Row Failed (${JSON.stringify(row)}):`, errorMsg);
+                            // If ADD failed because record already exists, fallback to EDIT / RESTOCK
+                            if (opr === 'ADD' && resData.status && resData.status.includes('already exists') && idVal) {
+                                const retryPayload = {
+                                    proc_name: activeEntity,
+                                    opr: selectedMode,
+                                    table_values: cleanTableValues,
+                                    condition: String(idVal)
+                                };
+                                const retryRes = await fetch('/api/data', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(retryPayload)
+                                });
+                                const retryData = await retryRes.json();
+                                if (retryData.success) {
+                                    if (selectedMode === 'RESTOCK') {
+                                        restocked++;
+                                        row['Remark'] = 'Restocked';
+                                        if (idVal) newHighlightMap[idVal] = 'restock';
+                                    } else {
+                                        updated++;
+                                        row['Remark'] = 'Edited';
+                                        if (idVal) newHighlightMap[idVal] = 'edit';
+                                    }
+                                } else {
+                                    failed++;
+                                    const errorMsg = retryData.status || retryData.error || 'Operation Failed';
+                                    row['Remark'] = errorMsg;
+                                }
+                            } else {
+                                failed++;
+                                const errorMsg = resData.status || resData.error || 'Operation Failed';
+                                row['Remark'] = errorMsg;
+                                console.error(`Row Failed (${JSON.stringify(row)}):`, errorMsg);
+                            }
                         }
                     } catch (rowErr) {
                         failed++;
@@ -1188,17 +1337,36 @@
 
                 highlightMap = newHighlightMap;
 
-                // 4. Export & Download Result File with Remark Column
-                if (rows.length > 0) {
-                    const ws = XLSX.utils.json_to_sheet(rows);
-                    const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, "Import Results");
+                // Reorder keys so 'Remark' is placed cleanly as the final column
+                const formattedRows = rows.map(r => {
+                    const remarkVal = r.Remark;
+                    const newObj = {};
+                    Object.keys(r).forEach(k => {
+                        if (k !== 'Remark') newObj[k] = r[k];
+                    });
+                    if (remarkVal !== undefined) newObj['Remark'] = remarkVal;
+                    return newObj;
+                });
 
-                    const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-                    const exportExt = fileName.endsWith('.csv') ? 'csv' : 'xlsx';
-                    const exportFileName = `processed_${baseName}.${exportExt}`;
+                // 5. In-Place Direct Save back to Original File on Disk
+                if (fileHandle && formattedRows.length > 0) {
+                    try {
+                        const ws = XLSX.utils.json_to_sheet(formattedRows);
+                        const writable = await fileHandle.createWritable();
 
-                    XLSX.writeFile(wb, exportFileName);
+                        if (fileName.endsWith('.csv')) {
+                            const csvOutput = XLSX.utils.sheet_to_csv(ws);
+                            await writable.write(csvOutput);
+                        } else {
+                            const wb = XLSX.utils.book_new();
+                            XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+                            const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                            await writable.write(excelBuffer);
+                        }
+                        await writable.close();
+                    } catch (writeErr) {
+                        console.error('Failed to write directly back to file:', writeErr);
+                    }
                 }
 
                 const summary = [
@@ -1208,13 +1376,11 @@
                     failed > 0 ? `Errors: ${failed}` : null
                 ].filter(Boolean).join(', ');
 
-                showToast(`Import Completed! Downloaded result file with Remarks. (${summary || 'No changes made'})`);
-                event.target.value = '';
+                showToast(`Import Completed & Saved to ${file.name}! (${summary || 'No changes made'})`);
                 loadData();
 
             } catch (err) {
                 showToast('Import Error: ' + err.message, true);
-                event.target.value = '';
             }
         }
         function showToast(msg, isError = false) {

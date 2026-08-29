@@ -1,6 +1,6 @@
-product_id,price,discount,quantity
-102,1750.00,5.00,45
-103,1999.00,12.00,20
-104,1199.00,10.00,50
-105,5499.00,15.00,8
-106,2199.00,15.00,15
+product_id,category_id,price,discount,quantity,Remark
+102,2,1750,5,45,Edited
+103,7,1999,12,20,ERROR [50000]: Validation Error: category_id is required.
+104,5,1199,10,50,Edited
+105,14,5499,15,8,Edited
+106,15,2199,15,15,ERROR [50000]: Validation Error: category_id is required.
