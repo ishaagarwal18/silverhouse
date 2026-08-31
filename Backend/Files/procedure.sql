@@ -237,7 +237,7 @@ GO
 -- =========================================================================
 -- PROCEDURE 2: SP_category
 -- =========================================================================
-CREATE PROCEDURE dbo.SP_category
+CREATE OR ALTER PROCEDURE dbo.SP_category
     @Opr       NVARCHAR(10),
     @JSONstr   NVARCHAR(MAX) = NULL,
     @Condition NVARCHAR(255) = NULL
@@ -259,6 +259,12 @@ BEGIN
             @Description = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.description'))),
             @Slug        = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.slug'))),
             @IdealFor    = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.ideal_for')));
+
+        -- Fallback if 'title' or 'category_name' was passed instead of 'name'
+        IF @Name IS NULL OR @Name = ''
+            SET @Name = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.title')));
+        IF @Name IS NULL OR @Name = ''
+            SET @Name = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.category_name')));
     END
 
     IF @Opr IN ('EDIT', 'DELETE')
