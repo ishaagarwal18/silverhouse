@@ -63,7 +63,7 @@ export default function CheckoutModal({
           <div className="flex items-center space-x-2">
             <ShieldCheck className="w-5 h-5 text-[#D4AF37]" />
             <h3 className="font-serif font-bold text-lg text-[#1A1A1A]">
-              VedaSilvya Express Checkout
+              SilverHouse Express Checkout
             </h3>
           </div>
           <button onClick={onClose} className="p-2 text-silver-500 hover:text-black">

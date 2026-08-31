@@ -28,7 +28,7 @@ export default function MobileMenu({
           <div className="p-4 border-b border-silver-200 flex items-center justify-between bg-silver-50">
             <div className="flex items-center space-x-2">
               <Sparkles className="w-5 h-5 text-[#D4AF37]" />
-              <span className="font-serif text-lg font-bold text-[#1A1A1A]">VEDASILVYA</span>
+              <span className="font-serif text-lg font-bold text-[#1A1A1A]">SILVERHOUSE</span>
             </div>
             <button
               onClick={onClose}

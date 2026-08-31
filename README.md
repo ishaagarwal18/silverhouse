@@ -1,4 +1,4 @@
-# Silver House (Silvya Spiritual Store)
+# Silver House
 
 A full-stack e-commerce application specializing in premium silver artifacts, coins, idols, jewelry, spiritual items, and home decor. Built with a modern React frontend and a Node.js Express API backend connected to Microsoft SQL Server.
 

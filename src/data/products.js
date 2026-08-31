@@ -1,4 +1,4 @@
-// Mock Product Catalog for VedaSilvya — Luxury Silver & Spiritual Artifacts Store
+// Mock Product Catalog for Silver House — Luxury Silver & Spiritual Artifacts Store
 
 export const CATEGORIES = [
   {
@@ -117,7 +117,7 @@ export const PRODUCTS = [
   },
   {
     id: "bar-pure-silver-50g",
-    name: "VedaSilvya 999 Pure Silver Investment Bar (50 Grams)",
+    name: "Silver House 999 Pure Silver Investment Bar (50 Grams)",
     category: "silver-coins-bars",
     subcategory: "investment-bars",
     purity: "999 Fine Pure Silver",
@@ -578,7 +578,7 @@ export const TESTIMONIALS = [
     location: "Delhi NCR",
     rating: 5,
     date: "3 weeks ago",
-    comment: "The Silver Nazariya for our newborn daughter is so soft on her skin and the jingling Ghungroos bring so much joy to our house. Highly recommend VedaSilvya for baby gifting!",
+    comment: "The Silver Nazariya for our newborn daughter is so soft on her skin and the jingling Ghungroos bring so much joy to our house. Highly recommend Silver House for baby gifting!",
     product: "Silver Ghungroo Baby Bangles",
     avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80"
   }
