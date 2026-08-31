@@ -49,3 +49,16 @@ CREATE TABLE product_image (
     CONSTRAINT FK_pi_product FOREIGN KEY (product_id) REFERENCES product(product_id) ON DELETE CASCADE,
     CONSTRAINT FK_pi_image FOREIGN KEY (image_id) REFERENCES image(image_id) ON DELETE CASCADE
 );
+
+
+USE SilverHouse;
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.columns 
+    WHERE object_id = OBJECT_ID('dbo.product') AND name = 'priority'
+)
+BEGIN
+    ALTER TABLE dbo.product ADD [priority] INT NOT NULL DEFAULT 0;
+END
+GO

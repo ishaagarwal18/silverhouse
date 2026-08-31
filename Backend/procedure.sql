@@ -16,7 +16,7 @@ GO
 CREATE PROCEDURE dbo.SP_product
     @Opr       NVARCHAR(10),
     @JSONstr   NVARCHAR(MAX) = NULL,
-    @Condition NVARCHAR(255) = NULL
+    @Condition NVARCHAR(MAX) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -38,6 +38,7 @@ BEGIN
     DECLARE @Packaging VARCHAR(50);
     DECLARE @LabourCost DECIMAL(18,2);
     DECLARE @ActualCost DECIMAL(18,2);
+    DECLARE @Priority INT;
 
     -- Extract JSON fields
     IF @JSONstr IS NOT NULL AND ISJSON(@JSONstr) > 0
@@ -56,7 +57,8 @@ BEGIN
             @IdealFor       = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.ideal_for'))),
             @Packaging      = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.packaging'))),
             @LabourCost     = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.labour_cost') AS DECIMAL(18,2)),
-            @ActualCost     = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.actual_cost') AS DECIMAL(18,2));
+            @ActualCost     = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.actual_cost') AS DECIMAL(18,2)),
+            @Priority       = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.priority') AS INT);
 
         IF @Title IS NULL OR @Title = ''
             SET @Title = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.name')));
@@ -86,13 +88,13 @@ BEGIN
         END
     END
 
-    -- SELECT
+    -- SELECT (Ordered by priority descending, then newest product_id)
     IF @Opr = 'SELECT'
     BEGIN
         IF @TargetId IS NOT NULL AND @TargetId > 0
             SELECT * FROM dbo.product WHERE product_id = @TargetId;
         ELSE
-            SELECT * FROM dbo.product;
+            SELECT * FROM dbo.product ORDER BY [priority] DESC, product_id DESC;
     END
 
     -- ADD
@@ -113,34 +115,21 @@ BEGIN
             RAISERROR('Validation Error: m_id %d does not exist in dbo.make_master.', 16, 1, @MakeId);
             RETURN;
         END
-        IF @Purity IS NULL OR LEN(@Purity) = 0
-            SET @Purity = '92.5 Sterling';
 
-        IF @Weight IS NULL OR LEN(@Weight) = 0
-            SET @Weight = 'N/A';
-
-        IF @Title IS NULL OR LEN(@Title) = 0
-            SET @Title = 'Silver Product';
-
-        IF @Description IS NULL OR LEN(@Description) = 0
-            SET @Description = 'Silver Jewelry';
-
+        IF @Purity IS NULL OR LEN(@Purity) = 0 SET @Purity = '92.5 Sterling';
+        IF @Weight IS NULL OR LEN(@Weight) = 0 SET @Weight = 'N/A';
+        IF @Title IS NULL OR LEN(@Title) = 0 SET @Title = 'Silver Product';
+        IF @Description IS NULL OR LEN(@Description) = 0 SET @Description = 'Silver Jewelry';
         IF @Price IS NULL OR @Price < 0
         BEGIN
             RAISERROR('Validation Error: price must be a valid non-negative number.', 16, 1);
             RETURN;
         END
+        IF @Quantity IS NULL OR @Quantity < 0 SET @Quantity = 1;
+        IF @IdealFor IS NULL OR LEN(@IdealFor) = 0 SET @IdealFor = 'ALL';
+        IF @ActualCost IS NULL OR @ActualCost < 0 SET @ActualCost = ISNULL(@Price, 0.00);
+        IF @Priority IS NULL SET @Priority = 0;
 
-        IF @Quantity IS NULL OR @Quantity < 0
-            SET @Quantity = 1;
-
-        IF @IdealFor IS NULL OR LEN(@IdealFor) = 0
-            SET @IdealFor = 'ALL';
-
-        IF @ActualCost IS NULL OR @ActualCost < 0
-            SET @ActualCost = ISNULL(@Price, 0.00);
-
-        -- Check custom Product ID or generate new auto-increment
         IF @InputProductId IS NOT NULL AND @InputProductId > 0
         BEGIN
             IF EXISTS (SELECT 1 FROM dbo.product WHERE product_id = @InputProductId)
@@ -158,16 +147,18 @@ BEGIN
         INSERT INTO dbo.product (
             product_id, category_id, m_id, purity, [weight], 
             title, [description], price, discount, quantity, 
-            ideal_for, packaging, labour_cost, actual_cost
+            ideal_for, packaging, labour_cost, actual_cost, [priority]
         )
         VALUES (
             @NewProductId, @CategoryId, @MakeId, @Purity, @Weight,
             @Title, @Description, @Price, @Discount, @Quantity,
-            @IdealFor, @Packaging, @LabourCost, @ActualCost
+            @IdealFor, @Packaging, @LabourCost, @ActualCost, @Priority
         );
 
         SELECT @NewProductId AS NewProductId, 'Product added successfully' AS [Message];
     END
+
+    -- RESTOCK
     ELSE IF @Opr = 'RESTOCK'
     BEGIN
         UPDATE dbo.product
@@ -176,6 +167,7 @@ BEGIN
 
         SELECT @TargetId AS ProductId, 'Stock restocked successfully' AS [Message];
     END
+
     -- EDIT
     ELSE IF @Opr = 'EDIT'
     BEGIN
@@ -191,25 +183,26 @@ BEGIN
         END
 
         UPDATE dbo.product
-        SET category_id  = ISNULL(@CategoryId, category_id),
-            m_id         = CASE WHEN @MakeId IS NOT NULL THEN @MakeId ELSE m_id END,
-            purity       = ISNULL(@Purity, purity),
-            [weight]     = ISNULL(@Weight, [weight]),
-            title        = ISNULL(@Title, title),
-            [description]= ISNULL(@Description, [description]),
-            price        = ISNULL(@Price, price),
-            discount     = CASE WHEN @Discount IS NOT NULL THEN @Discount ELSE discount END,
-            quantity     = ISNULL(@Quantity, quantity),
-            ideal_for    = ISNULL(@IdealFor, ideal_for),
-            packaging    = CASE WHEN @Packaging IS NOT NULL THEN @Packaging ELSE packaging END,
-            labour_cost  = CASE WHEN @LabourCost IS NOT NULL THEN @LabourCost ELSE labour_cost END,
-            actual_cost  = ISNULL(@ActualCost, actual_cost)
+        SET category_id   = ISNULL(@CategoryId, category_id),
+            m_id          = CASE WHEN @MakeId IS NOT NULL THEN @MakeId ELSE m_id END,
+            purity        = ISNULL(@Purity, purity),
+            [weight]      = ISNULL(@Weight, [weight]),
+            title         = ISNULL(@Title, title),
+            [description] = ISNULL(@Description, [description]),
+            price         = ISNULL(@Price, price),
+            discount      = CASE WHEN @Discount IS NOT NULL THEN @Discount ELSE discount END,
+            quantity      = ISNULL(@Quantity, quantity),
+            ideal_for     = ISNULL(@IdealFor, ideal_for),
+            packaging     = CASE WHEN @Packaging IS NOT NULL THEN @Packaging ELSE packaging END,
+            labour_cost   = CASE WHEN @LabourCost IS NOT NULL THEN @LabourCost ELSE labour_cost END,
+            actual_cost   = ISNULL(@ActualCost, actual_cost),
+            [priority]    = ISNULL(@Priority, [priority])
         WHERE product_id = @TargetId;
 
         SELECT @TargetId AS ProductId, 'Product updated successfully' AS [Message];
     END
 
-    -- DELETE (Cascade delete)
+    -- DELETE
     ELSE IF @Opr = 'DELETE'
     BEGIN
         BEGIN TRANSACTION;

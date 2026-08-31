@@ -4,6 +4,8 @@ GO
 IF OBJECT_ID('dbo.SP_productdata', 'P') IS NOT NULL 
     DROP PROCEDURE dbo.SP_productdata;
 GO
+USE SilverHouse;
+GO
 
 CREATE PROCEDURE dbo.SP_productdata
     @JSONstr   NVARCHAR(MAX) = NULL,
@@ -12,16 +14,16 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- 1. Extract possible filter values from @Condition or @JSONstr
-    DECLARE @FilterProductId INT = TRY_CAST(@Condition AS INT);
-    DECLARE @FilterCategoryId INT;
+    DECLARE @FilterProductId    INT = TRY_CAST(@Condition AS INT);
+    DECLARE @FilterCategoryId   INT;
     DECLARE @FilterCategoryName NVARCHAR(100);
-    DECLARE @FilterMakeId INT;
-    DECLARE @FilterIdealFor VARCHAR(20);
-    DECLARE @FilterPurity VARCHAR(30);
-    DECLARE @FilterMinPrice DECIMAL(18,2);
-    DECLARE @FilterMaxPrice DECIMAL(18,2);
-    DECLARE @SearchKeyword NVARCHAR(100);
+    DECLARE @FilterMakeId       INT;
+    DECLARE @FilterMakeType     NVARCHAR(50);
+    DECLARE @FilterIdealFor     VARCHAR(20);
+    DECLARE @FilterPurity       VARCHAR(30);
+    DECLARE @FilterMinPrice     DECIMAL(18,2);
+    DECLARE @FilterMaxPrice     DECIMAL(18,2);
+    DECLARE @SearchKeyword      NVARCHAR(100);
 
     IF @JSONstr IS NOT NULL AND ISJSON(@JSONstr) > 0
     BEGIN
@@ -30,6 +32,7 @@ BEGIN
             @FilterCategoryId   = COALESCE(TRY_CAST(JSON_VALUE(@JSONstr, '$.filters.category_id') AS INT), TRY_CAST(JSON_VALUE(@JSONstr, '$.category_id') AS INT)),
             @FilterCategoryName = COALESCE(LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.filters.category_name'))), LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.category_name')))),
             @FilterMakeId       = COALESCE(TRY_CAST(JSON_VALUE(@JSONstr, '$.filters.m_id') AS INT), TRY_CAST(JSON_VALUE(@JSONstr, '$.m_id') AS INT)),
+            @FilterMakeType     = COALESCE(LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.filters.make_type'))), LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.make_type')))),
             @FilterIdealFor     = COALESCE(LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.filters.ideal_for'))), LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.ideal_for')))),
             @FilterPurity       = COALESCE(LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.filters.purity'))), LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.purity')))),
             @FilterMinPrice     = COALESCE(TRY_CAST(JSON_VALUE(@JSONstr, '$.filters.min_price') AS DECIMAL(18,2)), TRY_CAST(JSON_VALUE(@JSONstr, '$.min_price') AS DECIMAL(18,2))),
@@ -37,7 +40,6 @@ BEGIN
             @SearchKeyword      = COALESCE(LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.filters.search'))), LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.search'))));
     END
 
-    -- If category_name was passed, resolve it to category_id
     IF @FilterCategoryId IS NULL AND @FilterCategoryName IS NOT NULL AND @FilterCategoryName <> ''
     BEGIN
         SELECT TOP 1 @FilterCategoryId = category_id
@@ -45,7 +47,6 @@ BEGIN
         WHERE LOWER(LTRIM(RTRIM(name))) = LOWER(LTRIM(RTRIM(@FilterCategoryName)));
     END
 
-    -- 2. Fetch Joined Product Data + Aggregate Images + Apply Filters
     SELECT 
         p.product_id,
         p.title AS product_name,
@@ -60,6 +61,7 @@ BEGIN
         p.packaging,
         p.labour_cost,
         p.actual_cost,
+        p.[priority],
 
         -- Category Details
         p.category_id,
@@ -88,31 +90,22 @@ BEGIN
     LEFT JOIN dbo.category c ON p.category_id = c.category_id
     LEFT JOIN dbo.make_master m ON p.m_id = m.m_id
     WHERE 
-        -- Filter by Product ID
         (@FilterProductId IS NULL OR p.product_id = @FilterProductId)
-        -- Filter by Category ID
         AND (@FilterCategoryId IS NULL OR p.category_id = @FilterCategoryId)
-        -- Filter by Make ID
         AND (@FilterMakeId IS NULL OR p.m_id = @FilterMakeId)
-        -- Filter by Target Audience (Women, Men, Kids, ALL)
-        AND (@FilterIdealFor IS NULL OR p.ideal_for = @FilterIdealFor OR p.ideal_for = 'ALL')
-        -- Filter by Purity
+        AND (@FilterMakeType IS NULL OR m.[type] = @FilterMakeType)
+        AND (@FilterIdealFor IS NULL OR LOWER(LTRIM(RTRIM(p.ideal_for))) = LOWER(@FilterIdealFor))
         AND (@FilterPurity IS NULL OR p.purity LIKE '%' + @FilterPurity + '%')
-        -- Filter by Price Range
         AND (@FilterMinPrice IS NULL OR p.price >= @FilterMinPrice)
         AND (@FilterMaxPrice IS NULL OR p.price <= @FilterMaxPrice)
-        -- Search by Name or Description keyword
         AND (
             @SearchKeyword IS NULL 
             OR p.title LIKE '%' + @SearchKeyword + '%' 
             OR p.[description] LIKE '%' + @SearchKeyword + '%'
         )
-    ORDER BY p.product_id DESC;
+    ORDER BY p.[priority] DESC, p.product_id DESC;
 END;
 GO
-
-
-
 USE SilverHouse;
 GO
 

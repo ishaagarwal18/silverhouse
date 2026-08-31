@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SilverHouse Studio - Luxury Silver Jewelry Catalog</title>
+
+    <!-- Google Fonts & Phosphor Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --surface-card: #f1f5f9;
+            --surface-hover: #e2e8f0;
+            --border: #e2e8f0;
+            --border-focus: #6366f1;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-glow: rgba(79, 70, 229, 0.2);
+            --accent: #0284c7;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --sidebar-width: 290px;
+            --radius: 14px;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --input-bg: #ffffff;
+            --input-text: #0f172a;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            --card-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+            --topbar-border: #e2e8f0;
+            --bg-gradient: radial-gradient(circle at top center, rgba(99, 102, 241, 0.08), transparent 45%);
+            --header-bg: rgba(255, 255, 255, 0.85);
+            --card-media-bg: #f1f5f9;
+        }
+
+        [data-theme="dark"] {
+            --bg: #0b0f19;
+            --surface: #111827;
+            --surface-card: #1f2937;
+            --surface-hover: #374151;
+            --border: #374151;
+            --border-focus: #6366f1;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-glow: rgba(99, 102, 241, 0.25);
+            --accent: #38bdf8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --input-bg: #1f2937;
+            --input-text: #ffffff;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+            --topbar-border: rgba(255, 255, 255, 0.06);
+            --bg-gradient: radial-gradient(circle at top center, rgba(99, 102, 241, 0.07), transparent 45%);
+            --header-bg: rgba(17, 24, 39, 0.85);
+            --card-media-bg: #0f172a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image: var(--bg-gradient);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ================= SIDEBAR FILTER PANEL ================= */
+        .sidebar-filter {
+            width: var(--sidebar-width);
+            min-width: var(--sidebar-width);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 18px;
+            gap: 20px;
+            z-index: 20;
+            overflow-y: auto;
+            height: 100vh;
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #fff;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .brand-title {
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+
+        .brand-subtitle {
+            font-size: 10px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 700;
+        }
+
+        .btn-theme-toggle {
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 17px;
+            transition: var(--transition);
+        }
+
+        .btn-theme-toggle:hover {
+            background: var(--surface-hover);
+            transform: scale(1.05);
+        }
+
+        .filter-section-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            font-weight: 700;
+            padding: 0 2px;
+        }
+
+        .filter-group-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-field label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .filter-field select,
+        .filter-field input {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            padding: 9px 12px;
+            border-radius: 8px;
+            color: var(--input-text);
+            font-size: 13px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .filter-field select option {
+            background: var(--surface);
+            color: var(--text-main);
+        }
+
+        .filter-field select:focus,
+        .filter-field input:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .search-field {
+            position: relative;
+        }
+
+        .search-field i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        .search-field input {
+            padding-left: 32px;
+        }
+
+        .btn-reset-sidebar {
+            margin-top: 10px;
+            width: 100%;
+            background: rgba(239, 68, 68, 0.08);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: var(--transition);
+        }
+
+        .btn-reset-sidebar:hover {
+            background: rgba(239, 68, 68, 0.16);
+        }
+
+        /* ================= MAIN CONTENT VIEW ================= */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+            background: var(--bg-gradient);
+            background-color: var(--bg);
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 36px;
+            border-bottom: 1px solid var(--topbar-border);
+            background: var(--header-bg);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .title-box h1 {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .title-box p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .btn-secondary {
+            background: var(--surface-card);
+            color: var(--text-main);
+            border-color: var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface-hover);
+        }
+
+        .content-area {
+            padding: 32px 36px;
+            flex: 1;
+        }
+
+        /* ================= PRODUCTS GRID ================= */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .product-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-media {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            background: var(--card-media-bg);
+            overflow: hidden;
+        }
+
+        .card-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .product-card:hover .card-media img {
+            transform: scale(1.04);
+        }
+
+        .badge-discount {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: linear-gradient(135deg, #ef4444, #f97316);
+            color: #fff;
+            font-size: 10.5px;
+            font-weight: 800;
+            padding: 4px 8px;
+            border-radius: 6px;
+            z-index: 2;
+        }
+
+        .badge-category {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 10.5px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 6px;
+            z-index: 2;
+        }
+
+        .badge-purity {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(56, 189, 248, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: var(--accent);
+            font-size: 10.5px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            z-index: 2;
+        }
+
+        .card-body {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            gap: 10px;
+        }
+
+        .product-title {
+            font-size: 15.5px;
+            font-weight: 700;
+            line-height: 1.35;
+            color: var(--text-main);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 42px;
+        }
+
+        .product-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.45;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .specs-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 2px;
+            flex-wrap: wrap;
+        }
+
+        .spec-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 10.5px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .spec-pill i {
+            color: var(--primary);
+        }
+
+        .spec-pill.audience-pill {
+            color: var(--accent);
+            border-color: rgba(56, 189, 248, 0.25);
+            background: rgba(56, 189, 248, 0.06);
+        }
+
+        .price-section {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            margin-top: auto;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .final-price {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .original-price {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+
+        .stock-tag {
+            margin-left: auto;
+            font-size: 10.5px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .in-stock {
+            color: var(--success);
+        }
+
+        .out-of-stock {
+            color: var(--danger);
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 70px 20px;
+            background: var(--surface);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ================= SIDEBAR FILTER CONTROLS ================= -->
+    <aside class="sidebar-filter">
+        <div class="brand-header">
+            <a href="/catalog" class="brand-box">
+                <div class="brand-logo">
+                    <i class="ph-bold ph-gem"></i>
+                </div>
+                <div>
+                    <div class="brand-title">SilverHouse</div>
+                    <div class="brand-subtitle">Jewelry Catalog</div>
+                </div>
+            </a>
+            <button class="btn-theme-toggle" onclick="toggleTheme()" title="Toggle Light / Dark Mode">
+                <i class="ph-bold ph-moon" id="sidebarThemeIcon"></i>
+            </button>
+        </div>
+
+        <div class="filter-section-title">
+            <span>Filter Catalog</span>
+            <i class="ph-bold ph-faders"></i>
+        </div>
+
+        <div class="filter-group-list">
+            <!-- 1. Search Query -->
+            <div class="filter-field search-field">
+                <label>Search Keyword</label>
+                <i class="ph-bold ph-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Search item, style..." oninput="applyAllFilters()" />
+            </div>
+
+            <!-- 2. Strict Target Audience -->
+            <div class="filter-field">
+                <label>Target Audience</label>
+                <select id="targetFilter" onchange="applyAllFilters()">
+                    <option value="">All Audiences</option>
+                    <option value="Women">Women Only</option>
+                    <option value="Men">Men Only</option>
+                    <option value="Kids">Kids Only</option>
+                    <option value="ALL">Unisex (ALL) Only</option>
+                </select>
+            </div>
+
+            <!-- 3. Category Filter -->
+            <div class="filter-field">
+                <label>Category</label>
+                <select id="categoryFilter" onchange="applyAllFilters()">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+
+            <!-- 4. Purity Filter -->
+            <div class="filter-field">
+                <label>Silver Purity</label>
+                <select id="purityFilter" onchange="applyAllFilters()">
+                    <option value="">All Purities</option>
+                </select>
+            </div>
+
+            <!-- 5. Make / Craft Type Filter -->
+            <div class="filter-field">
+                <label>Craft / Make Type</label>
+                <select id="makeFilter" onchange="applyAllFilters()">
+                    <option value="">All Crafts / Makes</option>
+                </select>
+            </div>
+
+            <!-- 6. Price Range Filter -->
+            <div class="filter-field">
+                <label>Price Range</label>
+                <select id="priceRangeFilter" onchange="applyAllFilters()">
+                    <option value="">All Prices</option>
+                    <option value="0-2000">Under ₹2,000</option>
+                    <option value="2000-5000">₹2,000 - ₹5,000</option>
+                    <option value="5000-10000">₹5,000 - ₹10,000</option>
+                    <option value="10000-999999">Above ₹10,000</option>
+                </select>
+            </div>
+
+            <!-- 7. Stock Filter -->
+            <div class="filter-field">
+                <label>Stock Availability</label>
+                <select id="stockFilter" onchange="applyAllFilters()">
+                    <option value="">All Inventory</option>
+                    <option value="in_stock">In Stock Only</option>
+                </select>
+            </div>
+
+            <!-- 8. Sort Order -->
+            <div class="filter-field">
+                <label>Sort By</label>
+                <select id="sortFilter" onchange="applyAllFilters()">
+                    <option value="default">Newest First</option>
+                    <option value="price_asc">Price: Low to High</option>
+                    <option value="price_desc">Price: High to Low</option>
+                    <option value="discount_desc">Highest Discount</option>
+                </select>
+            </div>
+
+            <button class="btn-reset-sidebar" onclick="resetFilters()">
+                <i class="ph-bold ph-arrows-counter-clockwise"></i> Reset All Filters
+            </button>
+        </div>
+    </aside>
+
+    <!-- ================= MAIN PRODUCTS DISPLAY ================= -->
+    <main class="main-wrapper">
+        <header class="top-bar">
+            <div class="title-box">
+                <h1>Silver Jewelry Catalog</h1>
+                <p id="catalogCount">Loading live inventory...</p>
+            </div>
+
+            <div class="top-actions">
+                <button class="btn btn-secondary" onclick="toggleTheme()" id="themeToggleBtn">
+                    <i class="ph-bold ph-moon" id="themeIcon"></i>
+                    <span id="themeToggleText">Dark Mode</span>
+                </button>
+                <a href="/index.html" class="btn btn-secondary">
+                    <i class="ph-bold ph-gear"></i>
+                    <span>Admin Studio</span>
+                </a>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="products-grid" id="productsGrid"></div>
+        </div>
+    </main>
+
+    <script>
+        let allProducts = [];
+        let filteredProducts = [];
+
+        // Theme management with LocalStorage
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            applyTheme(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            const themeIcon = document.getElementById('themeIcon');
+            const themeToggleText = document.getElementById('themeToggleText');
+            const sidebarThemeIcon = document.getElementById('sidebarThemeIcon');
+
+            if (theme === 'dark') {
+                if (themeIcon) themeIcon.className = 'ph-bold ph-sun';
+                if (themeToggleText) themeToggleText.innerText = 'Light Mode';
+                if (sidebarThemeIcon) sidebarThemeIcon.className = 'ph-bold ph-sun';
+            } else {
+                if (themeIcon) themeIcon.className = 'ph-bold ph-moon';
+                if (themeToggleText) themeToggleText.innerText = 'Dark Mode';
+                if (sidebarThemeIcon) sidebarThemeIcon.className = 'ph-bold ph-moon';
+            }
+        }
+
+        async function fetchCatalogData() {
+            try {
+                const res = await fetch('/api/fetch');
+                const json = await res.json();
+                if (!json.success) throw new Error(json.status || json.error);
+
+                allProducts = json.data || [];
+                filteredProducts = [...allProducts];
+
+                populateDropdowns(allProducts);
+                applyAllFilters();
+
+            } catch (err) {
+                console.error("Failed to fetch catalog:", err);
+                document.getElementById('productsGrid').innerHTML = `
+                    <div class="empty-state">
+                        <i class="ph-bold ph-warning-circle" style="color: var(--danger);"></i>
+                        <h3>Failed to Load Catalog</h3>
+                        <p style="color:var(--text-muted); margin-top:6px;">${err.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function populateDropdowns(products) {
+            // Category options
+            const catSelect = document.getElementById('categoryFilter');
+            const categories = [...new Set(products.map(p => p.category_name).filter(Boolean))];
+            categories.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.innerText = c;
+                catSelect.appendChild(opt);
+            });
+
+            // Purity options
+            const puritySelect = document.getElementById('purityFilter');
+            const purities = [...new Set(products.map(p => p.purity).filter(Boolean))];
+            purities.forEach(pur => {
+                const opt = document.createElement('option');
+                opt.value = pur;
+                opt.innerText = pur;
+                puritySelect.appendChild(opt);
+            });
+
+            // Make / Craft options
+            const makeSelect = document.getElementById('makeFilter');
+            const makes = [...new Set(products.map(p => p.make_type).filter(Boolean))];
+            makes.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.innerText = m;
+                makeSelect.appendChild(opt);
+            });
+        }
+
+        function renderProductCards(products) {
+            const grid = document.getElementById('productsGrid');
+            const countElem = document.getElementById('catalogCount');
+            grid.innerHTML = '';
+
+            countElem.innerText = `Showing ${products.length} exclusive silver pieces`;
+
+            if (products.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="ph-bold ph-magnifying-glass"></i>
+                        <h3>No Products Found</h3>
+                        <p style="color:var(--text-muted); margin-top:6px;">No products match your selected filters. Try changing or resetting your filters.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            products.forEach(p => {
+                let imgUrl = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80';
+                if (p.images && p.images.length > 0 && p.images[0].image_url) {
+                    imgUrl = p.images[0].image_url;
+                }
+
+                const hasDiscount = p.discount && Number(p.discount) > 0;
+                const effectivePrice = p.final_price !== undefined ? Number(p.final_price) : Number(p.price);
+                const finalPriceFormatted = effectivePrice.toLocaleString('en-IN');
+                const origPriceFormatted = Number(p.price).toLocaleString('en-IN');
+                const inStock = p.quantity && Number(p.quantity) > 0;
+
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="card-media">
+                        ${hasDiscount ? `<span class="badge-discount">${p.discount}% OFF</span>` : ''}
+                        <span class="badge-category">${p.category_name || 'Silver'}</span>
+                        <span class="badge-purity">${p.purity || '92.5'}</span>
+                        <img src="${imgUrl}" alt="${p.product_name}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80'" />
+                    </div>
+
+                    <div class="card-body">
+                        <h3 class="product-title" title="${p.product_name}">${p.product_name}</h3>
+                        <p class="product-desc">${p.description || 'Authentic pure silver jewelry design.'}</p>
+
+                        <div class="specs-row">
+                            <span class="spec-pill"><i class="ph-bold ph-scales"></i> ${p.weight || 'N/A'}</span>
+                            <span class="spec-pill audience-pill"><i class="ph-bold ph-user"></i> ${p.ideal_for || 'ALL'}</span>
+                            ${p.make_type ? `<span class="spec-pill"><i class="ph-bold ph-hammer"></i> ${p.make_type}</span>` : ''}
+                        </div>
+
+                        <div class="price-section">
+                            <div>
+                                <span class="final-price">₹${finalPriceFormatted}</span>
+                                ${hasDiscount ? `<span class="original-price">₹${origPriceFormatted}</span>` : ''}
+                            </div>
+                            <span class="stock-tag ${inStock ? 'in-stock' : 'out-of-stock'}">
+                                <i class="ph-fill ph-circle"></i>
+                                ${inStock ? `${p.quantity} In Stock` : 'Sold Out'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function applyAllFilters() {
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+            const selectedAudience = document.getElementById('targetFilter').value.trim();
+            const selectedCategory = document.getElementById('categoryFilter').value;
+            const selectedPurity = document.getElementById('purityFilter').value;
+            const selectedMake = document.getElementById('makeFilter').value;
+            const selectedPriceRange = document.getElementById('priceRangeFilter').value;
+            const selectedStock = document.getElementById('stockFilter').value;
+            const selectedSort = document.getElementById('sortFilter').value;
+
+            filteredProducts = allProducts.filter(p => {
+                // 1. Search Query Filter
+                const matchesSearch = !searchQuery ||
+                    (p.product_name && p.product_name.toLowerCase().includes(searchQuery)) ||
+                    (p.description && p.description.toLowerCase().includes(searchQuery));
+
+                // 2. Strict Audience Filter: Matches ONLY exact selection
+                const pAudience = (p.ideal_for || '').trim();
+                const matchesAudience = !selectedAudience || (pAudience.toLowerCase() === selectedAudience.toLowerCase());
+
+                // 3. Category Filter
+                const matchesCategory = !selectedCategory || p.category_name === selectedCategory;
+
+                // 4. Purity Filter
+                const matchesPurity = !selectedPurity || p.purity === selectedPurity;
+
+                // 5. Make Filter
+                const matchesMake = !selectedMake || p.make_type === selectedMake;
+
+                // 6. Price Range Filter
+                let matchesPrice = true;
+                const effectivePrice = p.final_price !== undefined ? Number(p.final_price) : Number(p.price);
+                if (selectedPriceRange) {
+                    const [min, max] = selectedPriceRange.split('-').map(Number);
+                    matchesPrice = effectivePrice >= min && effectivePrice <= max;
+                }
+
+                // 7. Stock Availability Filter
+                const matchesStock = !selectedStock || (selectedStock === 'in_stock' && Number(p.quantity) > 0);
+
+                return matchesSearch && matchesAudience && matchesCategory && matchesPurity && matchesMake && matchesPrice && matchesStock;
+            });
+
+            // 8. Sorting
+            if (selectedSort === 'price_asc') {
+                filteredProducts.sort((a, b) => (a.final_price || a.price) - (b.final_price || b.price));
+            } else if (selectedSort === 'price_desc') {
+                filteredProducts.sort((a, b) => (b.final_price || b.price) - (a.final_price || a.price));
+            } else if (selectedSort === 'discount_desc') {
+                filteredProducts.sort((a, b) => (b.discount || 0) - (a.discount || 0));
+            } else {
+                filteredProducts.sort((a, b) => b.product_id - a.product_id);
+            }
+
+            renderProductCards(filteredProducts);
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('targetFilter').value = '';
+            document.getElementById('categoryFilter').value = '';
+            document.getElementById('purityFilter').value = '';
+            document.getElementById('makeFilter').value = '';
+            document.getElementById('priceRangeFilter').value = '';
+            document.getElementById('stockFilter').value = '';
+            document.getElementById('sortFilter').value = 'default';
+            applyAllFilters();
+        }
+
+        initTheme();
+        fetchCatalogData();
+    </script>
+</body>
+
+</html>
