@@ -19,56 +19,41 @@ export default function Header({
 
   const DROPDOWNS = {
     jewellery: [
-      { label: "VIEW ALL", action: () => onNavigateCategory("silver-idols") },
-      { label: "SILVER RAKHI & SACRED THREADS", action: () => onNavigateSubcategory("silver-idols", "silver-rakhi") },
-      { label: "SILVER IDOLS (MURTI)", action: () => onNavigateCategory("silver-idols") },
-      { label: "SILVER UTENSILS & SILVERWARE", action: () => onNavigateCategory("utensils-silverware") },
-      { label: "SILVER YANTRA LOCKET", action: () => onNavigateYatraCustomizer() },
-      { label: "GIFTS UNDER 1499", action: () => onNavigateCategory("all") },
-      { label: "GIFTS BETWEEN 1499 TO 2499", action: () => onNavigateCategory("all") },
-      { label: "GIFTS BETWEEN 2499 TO 4999", action: () => onNavigateCategory("all") },
-      { label: "GIFTS ABOVE 4999", action: () => onNavigateCategory("all") }
+      { label: "VIEW ALL JEWELLERY", action: () => onNavigateCategory("all") },
+      { label: "SILVER RINGS", action: () => onNavigateCategory("silver-rings") },
+      { label: "SILVER PENDANTS & CHAINS", action: () => onNavigateCategory("silver-pendants-chains") },
+      { label: "SILVER BANGLES & KADAS", action: () => onNavigateCategory("silver-bangles-kadas") },
+      { label: "SILVER PAYAL & ANKLETS", action: () => onNavigateCategory("silver-payal-anklets") },
+      { label: "SILVER RELIGIOUS IDOLS", action: () => onNavigateCategory("silver-religious-idols") }
     ],
     coins: [
-      { label: "VIEW ALL COINS", action: () => onNavigateCategory("silver-coins-bars") },
-      { label: "PURE 999 FINE COINS", action: () => onNavigateSubcategory("silver-coins-bars", "pure-999-coins") },
-      { label: "GANESHA & LAXMI COINS", action: () => onNavigateSubcategory("silver-coins-bars", "embossed-festival-coins") },
-      { label: "INVESTMENT BARS & INGOTS", action: () => onNavigateSubcategory("silver-coins-bars", "investment-bars") }
+      { label: "VIEW ALL COINS & BARS", action: () => onNavigateCategory("silver-coins-bars") },
+      { label: "PURE 999 FINE COINS", action: () => onNavigateCategory("silver-coins-bars") },
+      { label: "LOTUS TEMPLE COINS", action: () => onNavigateCategory("silver-coins-bars") }
     ],
     women: [
-      { label: "VIEW ALL WOMEN", action: () => onNavigateCategory("sacred-rudraksha") },
-      { label: "SILVER CHAINS & PENDANTS", action: () => onNavigateCategory("sacred-rudraksha") },
-      { label: "RUDRAKSHA KAVACH LOCKET", action: () => onNavigateCategory("sacred-rudraksha") },
-      { label: "SACRED FEMININE MURTI", action: () => onNavigateCategory("silver-idols") }
+      { label: "VIEW ALL WOMEN", action: () => onNavigateCategory("silver-rings") },
+      { label: "SILVER RINGS", action: () => onNavigateCategory("silver-rings") },
+      { label: "SILVER PENDANTS & CHAINS", action: () => onNavigateCategory("silver-pendants-chains") },
+      { label: "SILVER BANGLES & KADAS", action: () => onNavigateCategory("silver-bangles-kadas") },
+      { label: "SILVER PAYAL & ANKLETS", action: () => onNavigateCategory("silver-payal-anklets") }
     ],
     mens: [
-      { label: "VIEW ALL MENS", action: () => onNavigateCategory("sacred-rudraksha") },
-      { label: "CERTIFIED 1-14 MUKHI RUDRAKSHA", action: () => onNavigateSubcategory("sacred-rudraksha", "certified-beads") },
-      { label: "SILVER CAPPED MALA", action: () => onNavigateSubcategory("sacred-rudraksha", "silver-capped-mala") },
-      { label: "RUDRAKSHA & SILVER LOCKETS", action: () => onNavigateSubcategory("sacred-rudraksha", "rudraksha-lockets") }
+      { label: "VIEW ALL MEN COLLECTION", action: () => onNavigateCategory("men-silver-collection") },
+      { label: "HEAVY CURB LINK BRACELET", action: () => onNavigateCategory("men-silver-collection") }
     ],
     kids: [
-      { label: "VIEW ALL KIDS", action: () => onNavigateCategory("kids-baby") },
-      { label: "SILVER NAZARIYA (BLACK BEAD)", action: () => onNavigateSubcategory("kids-baby", "silver-nazariya") },
-      { label: "BABY BANGLES & BRACELETS", action: () => onNavigateSubcategory("kids-baby", "baby-bangles") },
-      { label: "KIDS PAYAL & ANKLETS", action: () => onNavigateSubcategory("kids-baby", "kids-anklets") },
-      { label: "NEWBORN GIFT SETS", action: () => onNavigateSubcategory("kids-baby", "newborn-gifts") }
+      { label: "VIEW ALL KIDS", action: () => onNavigateCategory("kids-nazariya-bracelets") },
+      { label: "EVIL EYE BABY NAZARIYA", action: () => onNavigateCategory("kids-nazariya-bracelets") }
     ],
     gifts: [
-      { label: "VIEW ALL GIFTS", action: () => onNavigateCategory("custom-gifting") },
-      { label: "SILVER RAKHI", action: () => onNavigateSubcategory("silver-idols", "silver-rakhi") },
-      { label: "SILVER IDOLS", action: () => onNavigateCategory("silver-idols") },
-      { label: "SILVER UTENSILS", action: () => onNavigateCategory("utensils-silverware") },
-      { label: "SILVER YANTRA LOCKET", action: () => onNavigateYatraCustomizer() },
-      { label: "GIFTS UNDER 1499", action: () => onNavigateCategory("custom-gifting") },
-      { label: "GIFTS BETWEEN 1499 TO 2499", action: () => onNavigateCategory("custom-gifting") },
-      { label: "GIFTS BETWEEN 2499 TO 4999", action: () => onNavigateCategory("custom-gifting") },
-      { label: "GIFTS ABOVE 4999", action: () => onNavigateCategory("custom-gifting") }
+      { label: "ALL SACRED GIFTS", action: () => onNavigateCategory("all") },
+      { label: "SILVER RELIGIOUS IDOLS", action: () => onNavigateCategory("silver-religious-idols") },
+      { label: "SILVER COINS & BARS", action: () => onNavigateCategory("silver-coins-bars") }
     ],
     more: [
       { label: "ABOUT SILVERHOUSE", action: () => onNavigateHome() },
       { label: "100% BIS HALLMARK CERTIFICATION", action: () => onNavigateHome() },
-      { label: "CUSTOM ORDER ADVISORY", action: () => onNavigateYatraCustomizer() },
       { label: "EXPRESS NATIONWIDE SHIPPING", action: () => onNavigateHome() }
     ]
   };
@@ -140,7 +125,7 @@ export default function Header({
               onMouseLeave={() => setActiveDropdown(null)}
             >
               <button
-                onClick={() => onNavigateCategory("silver-idols")}
+                onClick={() => onNavigateCategory("all")}
                 className="py-6 text-xs xl:text-sm font-bold tracking-wider text-[#600814] hover:opacity-75 transition-opacity flex items-center space-x-1 uppercase focus:outline-hidden"
               >
                 <span>SILVER JEWELLERY</span>
@@ -216,7 +201,7 @@ export default function Header({
               onMouseLeave={() => setActiveDropdown(null)}
             >
               <button
-                onClick={() => onNavigateCategory("sacred-rudraksha")}
+                onClick={() => onNavigateCategory("silver-rings")}
                 className="py-6 text-xs xl:text-sm font-bold tracking-wider text-[#600814] hover:opacity-75 transition-opacity flex items-center space-x-1 uppercase focus:outline-hidden"
               >
                 <span>WOMEN</span>
@@ -254,7 +239,7 @@ export default function Header({
               onMouseLeave={() => setActiveDropdown(null)}
             >
               <button
-                onClick={() => onNavigateCategory("sacred-rudraksha")}
+                onClick={() => onNavigateCategory("men-silver-collection")}
                 className="py-6 text-xs xl:text-sm font-bold tracking-wider text-[#600814] hover:opacity-75 transition-opacity flex items-center space-x-1 uppercase focus:outline-hidden"
               >
                 <span>MENS</span>
@@ -292,7 +277,7 @@ export default function Header({
               onMouseLeave={() => setActiveDropdown(null)}
             >
               <button
-                onClick={() => onNavigateCategory("kids-baby")}
+                onClick={() => onNavigateCategory("kids-nazariya-bracelets")}
                 className="py-6 text-xs xl:text-sm font-bold tracking-wider text-[#600814] hover:opacity-75 transition-opacity flex items-center space-x-1 uppercase focus:outline-hidden"
               >
                 <span>KIDS</span>

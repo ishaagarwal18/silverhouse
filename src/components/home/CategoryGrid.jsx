@@ -2,7 +2,9 @@ import React from 'react';
 import { CATEGORIES } from '../../data/products';
 import { ArrowRight, Sparkles } from 'lucide-react';
 
-export default function CategoryGrid({ onSelectCategory }) {
+export default function CategoryGrid({ categories, onSelectCategory }) {
+  const categoryList = (categories && categories.length > 0) ? categories : CATEGORIES;
+
   return (
     <section className="py-16 bg-[#FAFAFA]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -20,9 +22,9 @@ export default function CategoryGrid({ onSelectCategory }) {
           </p>
         </div>
 
-        {/* 6 Category Tiles Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {CATEGORIES.map((category) => (
+        {/* Category Tiles Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {categoryList.map((category) => (
             <div
               key={category.id}
               onClick={() => onSelectCategory(category.id)}

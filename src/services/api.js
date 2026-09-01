@@ -37,7 +37,7 @@ export function normalizeProduct(rawItem) {
   return {
     id: String(rawItem.id || rawItem.product_id || rawItem.code || Math.random().toString(36).substring(2, 9)),
     name: rawItem.product_name || rawItem.name || 'Pure Silver Item',
-    category: (rawItem.category_name || rawItem.category || 'silver-coins-bars').toLowerCase().replace(/\s+/g, '-'),
+    category: (rawItem.slug || rawItem.category_slug || rawItem.category_name || rawItem.category || 'silver-coins-bars').toLowerCase().replace(/&/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
     subcategory: (rawItem.subcategory_name || rawItem.subcategory || 'all').toLowerCase().replace(/\s+/g, '-'),
     purity: rawItem.purity || '999 Fine Pure Silver',
     purityCode: rawItem.purity_code || '999',
@@ -107,7 +107,7 @@ export async function fetchCategories() {
 
     if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
       return json.data.map(cat => ({
-        id: (cat.slug || cat.name || String(cat.category_id)).toLowerCase().replace(/\s+/g, '-'),
+        id: (cat.slug || cat.name || String(cat.category_id)).toLowerCase().replace(/&/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
         category_id: cat.category_id,
         name: cat.name || 'Category',
         shortName: cat.name || 'Category',

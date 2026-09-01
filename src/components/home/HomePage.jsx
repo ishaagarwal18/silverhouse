@@ -8,6 +8,7 @@ import Testimonials from './Testimonials';
 
 export default function HomePage({
   products,
+  categories,
   onNavigateCategory,
   onNavigateYatraCustomizer,
   onAddToCart,
@@ -23,7 +24,7 @@ export default function HomePage({
         onNavigateYatraCustomizer={onNavigateYatraCustomizer}
       />
       <ValuePropBar />
-      <CategoryGrid onSelectCategory={onNavigateCategory} />
+      <CategoryGrid categories={categories} onSelectCategory={onNavigateCategory} />
       <FeaturedTabs
         products={products}
         onAddToCart={onAddToCart}
