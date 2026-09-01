@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { PRODUCTS, PINCODES } from '../../data/products';
 import { 
   Star, ShieldCheck, Award, Truck, Heart, ShoppingBag, 
@@ -18,6 +18,7 @@ export default function ProductDetailPage({
   onTriggerToast
 }) {
   const { productId } = useParams();
+  const navigate = useNavigate();
   const [selectedImage, setSelectedImage] = useState(0);
   const [qty, setQty] = useState(1);
   const [activeAccordion, setActiveAccordion] = useState('specs');
@@ -87,9 +88,19 @@ export default function ProductDetailPage({
       <div className="bg-silver-100 border-b border-silver-200 py-3 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-silver-600">
           <nav className="flex items-center space-x-2">
-            <button onClick={() => onSelectProduct && onSelectProduct(null)} className="hover:text-[#D4AF37]">Home</button>
+            <button
+              onClick={() => navigate('/')}
+              className="hover:text-[#D4AF37] font-medium transition-colors cursor-pointer"
+            >
+              Home
+            </button>
             <ChevronRight className="w-3 h-3 text-silver-400" />
-            <span className="capitalize">{currentProduct.category.replace('-', ' ')}</span>
+            <button
+              onClick={() => navigate(`/category/${currentProduct.category}`)}
+              className="hover:text-[#D4AF37] font-medium capitalize transition-colors cursor-pointer"
+            >
+              {currentProduct.category_name || currentProduct.category.replace(/-/g, ' ')}
+            </button>
             <ChevronRight className="w-3 h-3 text-silver-400" />
             <span className="text-[#1A1A1A] font-semibold line-clamp-1">{currentProduct.name}</span>
           </nav>
