@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 
 export default function ProductListingPage({
+  products,
   categoryId,
   subcategoryId,
   onSelectCategory,
@@ -37,7 +38,8 @@ export default function ProductListingPage({
 
   // Filtered & Sorted Products
   const filteredProducts = useMemo(() => {
-    let result = [...PRODUCTS];
+    const rawList = (products && products.length > 0) ? products : PRODUCTS;
+    let result = [...rawList];
 
     if (selectedCategory !== 'all') {
       result = result.filter(p => p.category === selectedCategory);
@@ -73,7 +75,7 @@ export default function ProductListingPage({
     }
 
     return result;
-  }, [selectedCategory, selectedSubcategory, selectedPurity, selectedRecipient, maxPrice, inStockOnly, sortBy]);
+  }, [products, selectedCategory, selectedSubcategory, selectedPurity, selectedRecipient, maxPrice, inStockOnly, sortBy]);
 
   const resetFilters = () => {
     setSelectedCategory('all');

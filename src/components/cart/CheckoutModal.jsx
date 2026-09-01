@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, CheckCircle2, ShieldCheck, CreditCard, Smartphone, Building2, Truck, ArrowRight, Lock, Sparkles } from 'lucide-react';
+import { postApiData } from '../../services/api';
 
 export default function CheckoutModal({
   isOpen,
@@ -40,10 +41,37 @@ export default function CheckoutModal({
     setStep(2);
   };
 
-  const handleCompleteOrder = () => {
+  const handleCompleteOrder = async () => {
     const generatedID = 'VS-' + Math.floor(100000 + Math.random() * 900000);
     setOrderId(generatedID);
     setStep(3);
+
+    // Send order record payload to backend Express API
+    const orderPayload = {
+      proc_name: 'orders',
+      opr: 'INSERT',
+      table_values: {
+        order_id: generatedID,
+        customer_name: formData.fullName,
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        delivery_address: `${formData.address}, ${formData.city}, ${formData.pincode}`,
+        total_amount: totalAmount,
+        discount_amount: discountAmount,
+        payment_method: paymentMethod,
+        items: cartItems.map(item => ({
+          id: item.product.id,
+          name: item.product.name,
+          qty: item.quantity,
+          price: item.product.price
+        }))
+      }
+    };
+
+    postApiData(orderPayload).catch(err => {
+      console.warn('[Checkout] Order post warning:', err);
+    });
+
     onClearCart();
   };
 

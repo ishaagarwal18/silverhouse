@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AnnouncementBar from './components/common/AnnouncementBar';
 import Header from './components/common/Header';
 import MobileMenu from './components/common/MobileMenu';
@@ -12,8 +12,13 @@ import ProductDetailPage from './components/pdp/ProductDetailPage';
 import CartDrawer from './components/cart/CartDrawer';
 import CheckoutModal from './components/cart/CheckoutModal';
 import WishlistDrawer from './components/wishlist/WishlistDrawer';
+import { fetchProducts } from './services/api';
+import { PRODUCTS } from './data/products';
 
 export default function App() {
+  // Products dataset loaded live from Backend API
+  const [products, setProducts] = useState(PRODUCTS);
+
   // Navigation & View Routing State
   const [currentView, setCurrentView] = useState('home'); // 'home' | 'plp' | 'pdp'
   const [selectedCategoryId, setSelectedCategoryId] = useState('all');
@@ -23,6 +28,17 @@ export default function App() {
   // Cart & Wishlist State
   const [cartItems, setCartItems] = useState([]);
   const [wishlistIds, setWishlistIds] = useState(['coin-laxmi-ganesh-999-10g', 'idol-pure-ganesha-sitting-50g']);
+
+  // Fetch backend data on app mount
+  useEffect(() => {
+    async function loadDataFromBackend() {
+      const data = await fetchProducts();
+      if (data && data.length > 0) {
+        setProducts(data);
+      }
+    }
+    loadDataFromBackend();
+  }, []);
 
   // Modals & Drawers Visibility State
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -163,6 +179,7 @@ export default function App() {
         <main>
           {currentView === 'home' && (
             <HomePage
+              products={products}
               onNavigateCategory={handleNavigateCategory}
               onNavigateYatraCustomizer={handleNavigateYatraCustomizer}
               onAddToCart={handleAddToCart}
@@ -175,6 +192,7 @@ export default function App() {
 
           {currentView === 'plp' && (
             <ProductListingPage
+              products={products}
               categoryId={selectedCategoryId}
               subcategoryId={selectedSubcategoryId}
               onSelectCategory={handleNavigateCategory}
@@ -191,6 +209,7 @@ export default function App() {
           {currentView === 'pdp' && selectedProduct && (
             <ProductDetailPage
               product={selectedProduct}
+              allProducts={products}
               onAddToCart={handleAddToCart}
               onToggleWishlist={handleToggleWishlist}
               isWishlisted={wishlistIds.includes(selectedProduct.id)}
@@ -221,6 +240,7 @@ export default function App() {
 
       <SearchModal
         isOpen={isSearchOpen}
+        products={products}
         onClose={() => setIsSearchOpen(false)}
         onSelectProduct={handleSelectProduct}
         onNavigateCategory={handleNavigateCategory}
@@ -247,6 +267,7 @@ export default function App() {
 
       <WishlistDrawer
         isOpen={isWishlistOpen}
+        products={products}
         onClose={() => setIsWishlistOpen(false)}
         wishlistIds={wishlistIds}
         onToggleWishlist={handleToggleWishlist}

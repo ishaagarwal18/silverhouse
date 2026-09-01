@@ -10,6 +10,7 @@ const TABS = [
 ];
 
 export default function FeaturedTabs({
+  products,
   onAddToCart,
   onToggleWishlist,
   wishlistIds,
@@ -20,7 +21,8 @@ export default function FeaturedTabs({
   const [activeTab, setActiveTab] = useState("bestsellers");
 
   const currentTab = TABS.find((t) => t.id === activeTab) || TABS[0];
-  const items = PRODUCTS.filter(currentTab.filter).slice(0, 8);
+  const allProds = (products && products.length > 0) ? products : PRODUCTS;
+  const items = allProds.filter(currentTab.filter).slice(0, 8);
 
   return (
     <section className="py-16 bg-white border-y border-silver-200">

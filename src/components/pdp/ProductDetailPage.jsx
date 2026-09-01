@@ -7,6 +7,7 @@ import {
 
 export default function ProductDetailPage({
   product,
+  allProducts,
   onAddToCart,
   onToggleWishlist,
   isWishlisted,
@@ -33,7 +34,8 @@ export default function ProductDetailPage({
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : null;
 
-  const relatedProducts = PRODUCTS.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
+  const productList = (allProducts && allProducts.length > 0) ? allProducts : PRODUCTS;
+  const relatedProducts = productList.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
 
   // Handle Mock Image Upload
   const handleImageUpload = (e) => {

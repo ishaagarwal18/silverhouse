@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { PRODUCTS } from '../../data/products';
 import { Search, X, Sparkles, ArrowRight, Shield } from 'lucide-react';
 
-export default function SearchModal({ isOpen, onClose, onSelectProduct, onNavigateCategory }) {
+export default function SearchModal({ isOpen, products, onClose, onSelectProduct, onNavigateCategory }) {
   const [query, setQuery] = useState('');
 
   if (!isOpen) return null;
 
+  const productList = (products && products.length > 0) ? products : PRODUCTS;
   const results = query.trim() === '' 
     ? [] 
-    : PRODUCTS.filter(p => 
+    : productList.filter(p => 
         p.name.toLowerCase().includes(query.toLowerCase()) ||
         p.category.toLowerCase().includes(query.toLowerCase()) ||
         p.purity.toLowerCase().includes(query.toLowerCase()) ||

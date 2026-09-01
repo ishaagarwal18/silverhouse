@@ -7,6 +7,7 @@ import ValuePropBar from './ValuePropBar';
 import Testimonials from './Testimonials';
 
 export default function HomePage({
+  products,
   onNavigateCategory,
   onNavigateYatraCustomizer,
   onAddToCart,
@@ -24,6 +25,7 @@ export default function HomePage({
       <ValuePropBar />
       <CategoryGrid onSelectCategory={onNavigateCategory} />
       <FeaturedTabs
+        products={products}
         onAddToCart={onAddToCart}
         onToggleWishlist={onToggleWishlist}
         wishlistIds={wishlistIds}

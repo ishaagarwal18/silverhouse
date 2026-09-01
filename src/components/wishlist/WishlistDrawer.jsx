@@ -4,6 +4,7 @@ import { X, Heart, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
 
 export default function WishlistDrawer({
   isOpen,
+  products,
   onClose,
   wishlistIds,
   onToggleWishlist,
@@ -12,7 +13,8 @@ export default function WishlistDrawer({
 }) {
   if (!isOpen) return null;
 
-  const wishlistedProducts = PRODUCTS.filter(p => wishlistIds.includes(p.id));
+  const productList = (products && products.length > 0) ? products : PRODUCTS;
+  const wishlistedProducts = productList.filter(p => wishlistIds.includes(p.id));
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
