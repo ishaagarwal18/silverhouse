@@ -30,8 +30,8 @@ export function normalizeProduct(rawItem) {
 
   const rawPrice = Number(rawItem.price) || Number(rawItem.original_price) || 1000;
   const discount = Number(rawItem.discount) || 0;
-  const finalPrice = rawItem.final_price !== undefined && rawItem.final_price !== null 
-    ? Number(rawItem.final_price) 
+  const finalPrice = rawItem.final_price !== undefined && rawItem.final_price !== null
+    ? Number(rawItem.final_price)
     : (discount > 0 ? Math.round(rawPrice * (1 - discount / 100)) : rawPrice);
 
   return {

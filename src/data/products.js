@@ -25,7 +25,8 @@ export const CATEGORIES = [
       { id: "ganesha-laxmi", name: "Lord Ganesha & Goddess Laxmi" },
       { id: "bal-gopal-krishna", name: "Bal Gopal / Krishna Idols" },
       { id: "dashboard-idols", name: "Pocket & Car Dashboard Idols" },
-      { id: "puja-artifacts", name: "Temple & Puja Room Artifacts" }
+      { id: "puja-artifacts", name: "Temple & Puja Room Artifacts" },
+      { id: "silver-rakhi", name: "Silver Rakhi & Sacred Threads" }
     ]
   },
   {
@@ -257,6 +258,34 @@ export const PRODUCTS = [
       "Weight": "15 Grams Silver Content",
       "Dimensions": "2.5 x 2.5 x 3 Inches",
       "Feature": "UV Resistant Acrylic Dome + 3M Base Tape"
+    }
+  },
+  {
+    id: "silver-rakhi-divine-om",
+    name: "925 Pure Silver Divine OM & Ganesha Rakhi",
+    category: "silver-idols",
+    subcategory: "silver-rakhi",
+    purity: "925 Sterling Silver",
+    purityCode: "925",
+    weightGrams: 5,
+    price: 999,
+    originalPrice: 1499,
+    rating: 5.0,
+    reviewsCount: 68,
+    inStock: true,
+    isBestSeller: true,
+    isCustomizable: false,
+    recipient: "Brother, Family, Puja",
+    images: [
+      "/images/pure_silver_coin_lakshmi_ganesh.png",
+      "/images/hero_silver_idols.png"
+    ],
+    shortDesc: "Blessed 925 sterling silver Om & Ganesha Rakhi handcrafted with resham thread. Includes BIS hallmark authenticity card.",
+    specs: {
+      "Metal Purity": "925 Sterling Silver",
+      "Weight": "5 Grams",
+      "Thread Material": "Pure Resham Thread with Silver Beads",
+      "Ideal For": "Raksha Bandhan, Brother Gifting"
     }
   },
 

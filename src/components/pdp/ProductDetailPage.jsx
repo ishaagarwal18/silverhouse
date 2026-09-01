@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { PRODUCTS, PINCODES } from '../../data/products';
 import { 
   Star, ShieldCheck, Award, Truck, Heart, ShoppingBag, 
@@ -15,6 +16,7 @@ export default function ProductDetailPage({
   onNavigateCheckout,
   onTriggerToast
 }) {
+  const { productId } = useParams();
   const [selectedImage, setSelectedImage] = useState(0);
   const [qty, setQty] = useState(1);
   const [activeAccordion, setActiveAccordion] = useState('specs');
@@ -28,14 +30,16 @@ export default function ProductDetailPage({
   const [pincodeInput, setPincodeInput] = useState('');
   const [pincodeResult, setPincodeResult] = useState(null);
 
-  if (!product) return null;
+  const productList = (allProducts && allProducts.length > 0) ? allProducts : PRODUCTS;
+  const currentProduct = product || productList.find(p => String(p.id) === String(productId)) || productList[0];
 
-  const discountPct = product.originalPrice 
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+  if (!currentProduct) return null;
+
+  const discountPct = currentProduct.originalPrice 
+    ? Math.round(((currentProduct.originalPrice - currentProduct.price) / currentProduct.originalPrice) * 100)
     : null;
 
-  const productList = (allProducts && allProducts.length > 0) ? allProducts : PRODUCTS;
-  const relatedProducts = productList.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
+  const relatedProducts = productList.filter(p => p.category === currentProduct.category && p.id !== currentProduct.id).slice(0, 4);
 
   // Handle Mock Image Upload
   const handleImageUpload = (e) => {

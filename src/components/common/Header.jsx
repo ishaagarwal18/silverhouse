@@ -20,7 +20,7 @@ export default function Header({
   const DROPDOWNS = {
     jewellery: [
       { label: "VIEW ALL", action: () => onNavigateCategory("silver-idols") },
-      { label: "SILVER RAKHI & PUJA ARTIFACTS", action: () => onNavigateSubcategory("silver-idols", "puja-artifacts") },
+      { label: "SILVER RAKHI & SACRED THREADS", action: () => onNavigateSubcategory("silver-idols", "silver-rakhi") },
       { label: "SILVER IDOLS (MURTI)", action: () => onNavigateCategory("silver-idols") },
       { label: "SILVER UTENSILS & SILVERWARE", action: () => onNavigateCategory("utensils-silverware") },
       { label: "SILVER YANTRA LOCKET", action: () => onNavigateYatraCustomizer() },
@@ -56,7 +56,7 @@ export default function Header({
     ],
     gifts: [
       { label: "VIEW ALL GIFTS", action: () => onNavigateCategory("custom-gifting") },
-      { label: "SILVER RAKHI", action: () => onNavigateSubcategory("silver-idols", "puja-artifacts") },
+      { label: "SILVER RAKHI", action: () => onNavigateSubcategory("silver-idols", "silver-rakhi") },
       { label: "SILVER IDOLS", action: () => onNavigateCategory("silver-idols") },
       { label: "SILVER UTENSILS", action: () => onNavigateCategory("utensils-silverware") },
       { label: "SILVER YANTRA LOCKET", action: () => onNavigateYatraCustomizer() },

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AnnouncementBar from './components/common/AnnouncementBar';
 import Header from './components/common/Header';
 import MobileMenu from './components/common/MobileMenu';
@@ -6,24 +7,19 @@ import SearchModal from './components/common/SearchModal';
 import QuickViewModal from './components/common/QuickViewModal';
 import ToastContainer from './components/common/ToastContainer';
 import Footer from './components/common/Footer';
-import HomePage from './components/home/HomePage';
-import ProductListingPage from './components/plp/ProductListingPage';
-import ProductDetailPage from './components/pdp/ProductDetailPage';
 import CartDrawer from './components/cart/CartDrawer';
 import CheckoutModal from './components/cart/CheckoutModal';
 import WishlistDrawer from './components/wishlist/WishlistDrawer';
+import AppRouter from './router/AppRouter';
 import { fetchProducts } from './services/api';
 import { PRODUCTS } from './data/products';
 
 export default function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   // Products dataset loaded live from Backend API
   const [products, setProducts] = useState(PRODUCTS);
-
-  // Navigation & View Routing State
-  const [currentView, setCurrentView] = useState('home'); // 'home' | 'plp' | 'pdp'
-  const [selectedCategoryId, setSelectedCategoryId] = useState('all');
-  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState('all');
-  const [selectedProduct, setSelectedProduct] = useState(null);
 
   // Cart & Wishlist State
   const [cartItems, setCartItems] = useState([]);
@@ -39,6 +35,11 @@ export default function App() {
     }
     loadDataFromBackend();
   }, []);
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [location.pathname]);
 
   // Modals & Drawers Visibility State
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -66,41 +67,33 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Handlers for Navigation
+  // Handlers for Router Navigation
   const handleNavigateHome = () => {
-    setCurrentView('home');
-    setSelectedCategoryId('all');
-    setSelectedSubcategoryId('all');
-    setSelectedProduct(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigate('/');
   };
 
   const handleNavigateCategory = (catId) => {
-    setSelectedCategoryId(catId);
-    setSelectedSubcategoryId('all');
-    setCurrentView('plp');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (catId === 'all') {
+      navigate('/catalog');
+    } else {
+      navigate(`/category/${catId}`);
+    }
   };
 
   const handleNavigateSubcategory = (catId, subId) => {
-    setSelectedCategoryId(catId);
-    setSelectedSubcategoryId(subId);
-    setCurrentView('plp');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (!subId || subId === 'all') {
+      navigate(`/category/${catId}`);
+    } else {
+      navigate(`/category/${catId}/${subId}`);
+    }
   };
 
   const handleSelectProduct = (product) => {
-    setSelectedProduct(product);
-    setCurrentView('pdp');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigate(`/product/${product.id}`);
   };
 
   const handleNavigateYatraCustomizer = () => {
-    // Navigate to PLP or directly open Yatra Locket PDP
-    setSelectedCategoryId('custom-gifting');
-    setSelectedSubcategoryId('custom-yatra-lockets');
-    setCurrentView('plp');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigate('/category/custom-gifting/custom-yatra-lockets');
   };
 
   // Cart Operations
@@ -177,49 +170,16 @@ export default function App() {
 
         {/* Main View Router */}
         <main>
-          {currentView === 'home' && (
-            <HomePage
-              products={products}
-              onNavigateCategory={handleNavigateCategory}
-              onNavigateYatraCustomizer={handleNavigateYatraCustomizer}
-              onAddToCart={handleAddToCart}
-              onToggleWishlist={handleToggleWishlist}
-              wishlistIds={wishlistIds}
-              onQuickView={(prod) => setQuickViewProduct(prod)}
-              onSelectProduct={handleSelectProduct}
-            />
-          )}
-
-          {currentView === 'plp' && (
-            <ProductListingPage
-              products={products}
-              categoryId={selectedCategoryId}
-              subcategoryId={selectedSubcategoryId}
-              onSelectCategory={handleNavigateCategory}
-              onSelectSubcategory={handleNavigateSubcategory}
-              onAddToCart={handleAddToCart}
-              onToggleWishlist={handleToggleWishlist}
-              wishlistIds={wishlistIds}
-              onQuickView={(prod) => setQuickViewProduct(prod)}
-              onSelectProduct={handleSelectProduct}
-              onNavigateYatraCustomizer={handleNavigateYatraCustomizer}
-            />
-          )}
-
-          {currentView === 'pdp' && selectedProduct && (
-            <ProductDetailPage
-              product={selectedProduct}
-              allProducts={products}
-              onAddToCart={handleAddToCart}
-              onToggleWishlist={handleToggleWishlist}
-              isWishlisted={wishlistIds.includes(selectedProduct.id)}
-              onSelectProduct={handleSelectProduct}
-              onNavigateCheckout={() => {
-                setIsCartOpen(true);
-              }}
-              onTriggerToast={triggerToast}
-            />
-          )}
+          <AppRouter
+            products={products}
+            onAddToCart={handleAddToCart}
+            onToggleWishlist={handleToggleWishlist}
+            wishlistIds={wishlistIds}
+            onQuickView={(prod) => setQuickViewProduct(prod)}
+            onSelectProduct={handleSelectProduct}
+            onTriggerToast={triggerToast}
+            onOpenCart={() => setIsCartOpen(true)}
+          />
         </main>
       </div>
 
