@@ -30,7 +30,7 @@ BEGIN
         SELECT
             @FilterProductId    = COALESCE(TRY_CAST(JSON_VALUE(@JSONstr, '$.filters.product_id') AS INT), TRY_CAST(JSON_VALUE(@JSONstr, '$.product_id') AS INT), @FilterProductId),
             @FilterCategoryId   = COALESCE(TRY_CAST(JSON_VALUE(@JSONstr, '$.filters.category_id') AS INT), TRY_CAST(JSON_VALUE(@JSONstr, '$.category_id') AS INT)),
-            @FilterCategoryName = COALESCE(LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.filters.category_name'))), LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.category_name')))),
+            @FilterCategoryName = COALESCE(LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.filters.category_name'))), LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.category_name'))), LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.filters.category'))), LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.category')))),
             @FilterMakeId       = COALESCE(TRY_CAST(JSON_VALUE(@JSONstr, '$.filters.m_id') AS INT), TRY_CAST(JSON_VALUE(@JSONstr, '$.m_id') AS INT)),
             @FilterMakeType     = COALESCE(LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.filters.make_type'))), LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.make_type')))),
             @FilterIdealFor     = COALESCE(LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.filters.ideal_for'))), LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.ideal_for')))),
@@ -40,11 +40,12 @@ BEGIN
             @SearchKeyword      = COALESCE(LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.filters.search'))), LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.search'))));
     END
 
-    IF @FilterCategoryId IS NULL AND @FilterCategoryName IS NOT NULL AND @FilterCategoryName <> ''
+    IF @FilterCategoryId IS NULL AND @FilterCategoryName IS NOT NULL AND @FilterCategoryName <> '' AND LOWER(@FilterCategoryName) <> 'all'
     BEGIN
         SELECT TOP 1 @FilterCategoryId = category_id
         FROM dbo.category
-        WHERE LOWER(LTRIM(RTRIM(name))) = LOWER(LTRIM(RTRIM(@FilterCategoryName)));
+        WHERE LOWER(LTRIM(RTRIM(name))) = LOWER(LTRIM(RTRIM(@FilterCategoryName)))
+           OR LOWER(LTRIM(RTRIM(slug))) = LOWER(LTRIM(RTRIM(@FilterCategoryName)));
     END
 
     SELECT 

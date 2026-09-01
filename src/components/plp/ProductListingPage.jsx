@@ -64,12 +64,13 @@ export default function ProductListingPage({
 
   // Fallback / Normalized Filtered List
   const filteredProducts = useMemo(() => {
-    if (backendItems && backendItems.length > 0) return backendItems;
-    const rawList = (products && products.length > 0) ? products : PRODUCTS;
+    const rawList = (backendItems && backendItems.length > 0)
+      ? backendItems
+      : ((products && products.length > 0) ? products : PRODUCTS);
     let result = [...rawList];
 
     if (selectedCategory !== 'all') {
-      result = result.filter(p => p.category === selectedCategory);
+      result = result.filter(p => p.category === selectedCategory || p.category_slug === selectedCategory);
     }
     if (selectedSubcategory !== 'all') {
       result = result.filter(p => p.subcategory === selectedSubcategory);
