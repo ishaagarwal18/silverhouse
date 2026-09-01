@@ -354,7 +354,7 @@ export default function ProductDetailPage({
 
                 {activeAccordion === 'specs' && (
                   <div className="p-4 bg-white text-xs space-y-2 border-t border-silver-200">
-                    {Object.entries(product.specs || {}).map(([key, val]) => (
+                    {Object.entries(currentProduct.specs || {}).map(([key, val]) => (
                       <div key={key} className="flex justify-between border-b border-silver-100 pb-1.5 last:border-none">
                         <span className="text-silver-600">{key}:</span>
                         <span className="font-semibold text-[#1A1A1A] text-right">{val}</span>
