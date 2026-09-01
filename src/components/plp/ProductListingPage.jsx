@@ -79,7 +79,11 @@ export default function ProductListingPage({
       result = result.filter(p => p.purityCode === selectedPurity);
     }
     if (selectedRecipient !== 'all') {
-      result = result.filter(p => p.recipient.includes(selectedRecipient));
+      result = result.filter(p => {
+        const val = (p.recipient || p.ideal_for || '').toString().toLowerCase();
+        const target = selectedRecipient.toLowerCase();
+        return val.includes(target) || val === 'all';
+      });
     }
     if (inStockOnly) {
       result = result.filter(p => p.inStock);
