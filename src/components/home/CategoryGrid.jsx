@@ -51,7 +51,7 @@ export default function CategoryGrid({ categories, onSelectCategory }) {
               {/* Bottom Content */}
               <div className="absolute bottom-0 inset-x-0 p-6 z-10 text-white flex flex-col justify-end">
                 <span className="text-[10px] font-bold text-[#D4AF37] uppercase tracking-wider mb-1">
-                  {category.subcategories.length} Collections
+                  {Array.isArray(category.subcategories) ? category.subcategories.length : 1} Collections
                 </span>
                 <h3 className="font-serif text-2xl font-bold mb-2 group-hover:text-[#D4AF37] transition-colors">
                   {category.name}
