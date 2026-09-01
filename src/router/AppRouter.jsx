@@ -6,6 +6,7 @@ import ProductDetailPage from '../components/pdp/ProductDetailPage';
 
 export default function AppRouter({
   products,
+  categories,
   onAddToCart,
   onToggleWishlist,
   wishlistIds,
@@ -22,6 +23,7 @@ export default function AppRouter({
         element={
           <HomePage
             products={products}
+            categories={categories}
             onAddToCart={onAddToCart}
             onToggleWishlist={onToggleWishlist}
             wishlistIds={wishlistIds}
@@ -37,6 +39,7 @@ export default function AppRouter({
         element={
           <ProductListingPage
             products={products}
+            categories={categories}
             onAddToCart={onAddToCart}
             onToggleWishlist={onToggleWishlist}
             wishlistIds={wishlistIds}

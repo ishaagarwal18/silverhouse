@@ -11,15 +11,16 @@ import CartDrawer from './components/cart/CartDrawer';
 import CheckoutModal from './components/cart/CheckoutModal';
 import WishlistDrawer from './components/wishlist/WishlistDrawer';
 import AppRouter from './router/AppRouter';
-import { fetchProducts } from './services/api';
-import { PRODUCTS } from './data/products';
+import { fetchProducts, fetchCategories } from './services/api';
+import { PRODUCTS, CATEGORIES } from './data/products';
 
 export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Products dataset loaded live from Backend API
+  // Datasets loaded live from Backend API
   const [products, setProducts] = useState(PRODUCTS);
+  const [categories, setCategories] = useState(CATEGORIES);
 
   // Cart & Wishlist State
   const [cartItems, setCartItems] = useState([]);
@@ -28,9 +29,13 @@ export default function App() {
   // Fetch backend data on app mount
   useEffect(() => {
     async function loadDataFromBackend() {
-      const data = await fetchProducts();
-      if (data && data.length > 0) {
-        setProducts(data);
+      const backendProducts = await fetchProducts();
+      if (backendProducts && backendProducts.length > 0) {
+        setProducts(backendProducts);
+      }
+      const backendCategories = await fetchCategories();
+      if (backendCategories && backendCategories.length > 0) {
+        setCategories(backendCategories);
       }
     }
     loadDataFromBackend();
@@ -158,6 +163,7 @@ export default function App() {
         <Header
           cartCount={cartCount}
           wishlistCount={wishlistIds.length}
+          categories={categories}
           onOpenCart={() => setIsCartOpen(true)}
           onOpenWishlist={() => setIsWishlistOpen(true)}
           onOpenSearch={() => setIsSearchOpen(true)}
@@ -172,6 +178,7 @@ export default function App() {
         <main>
           <AppRouter
             products={products}
+            categories={categories}
             onAddToCart={handleAddToCart}
             onToggleWishlist={handleToggleWishlist}
             wishlistIds={wishlistIds}

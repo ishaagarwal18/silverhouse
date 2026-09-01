@@ -95,6 +95,51 @@ export async function fetchProducts(filters = null) {
 }
 
 /**
+ * Fetches categories list directly from Backend API (/api/data with proc_name: 'category').
+ * Falls back to CATEGORIES if backend is unavailable.
+ */
+export async function fetchCategories() {
+  try {
+    const json = await postApiData({
+      proc_name: 'category',
+      opr: 'SELECT'
+    });
+
+    if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+      return json.data.map(cat => ({
+        id: (cat.slug || cat.name || String(cat.category_id)).toLowerCase().replace(/\s+/g, '-'),
+        category_id: cat.category_id,
+        name: cat.name || 'Category',
+        shortName: cat.name || 'Category',
+        description: cat.description || 'Sacred 925 & 999 Pure Silver Items',
+        idealFor: cat.ideal_for || 'All'
+      }));
+    }
+  } catch (err) {
+    console.warn('[API Service] Category fetch warning:', err);
+  }
+  return null;
+}
+
+/**
+ * Fetches a single product by ID from Backend API.
+ */
+export async function fetchProductById(productId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/fetch?condition=${encodeURIComponent(productId)}`);
+    if (response.ok) {
+      const json = await response.json();
+      if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+        return normalizeProduct(json.data[0]);
+      }
+    }
+  } catch (err) {
+    console.warn('[API Service] fetchProductById warning:', err);
+  }
+  return null;
+}
+
+/**
  * Submits an order or form submission to Backend API (/api/data).
  */
 export async function postApiData(payload) {

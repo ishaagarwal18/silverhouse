@@ -57,48 +57,40 @@ export default function ProductDetailPage({
   // Handle Pincode Lookup
   const handlePincodeCheck = (e) => {
     e.preventDefault();
-    if (!pincodeInput || pincodeInput.length !== 6) {
+    if (!pincodeInput || pincodeInput.trim().length !== 6) {
       onTriggerToast('error', 'Invalid PIN Code', 'Please enter a valid 6-digit Indian PIN code.');
       return;
     }
 
-    const info = PINCODES[pincodeInput] || {
-      status: "Available",
-      city: "Standard Location",
-      estDays: "3-5 Business Days",
-      cod: true
-    };
-
-    setPincodeResult(info);
-    onTriggerToast('success', `Delivery to ${info.city}`, `Estimated delivery by ${info.estDays}. COD available.`);
-  };
-
-  const handleAddToCartSubmit = (buyNow = false) => {
-    const customConfig = {
-      text: customText,
-      gotra: customGotra,
-      imagePreview: uploadedImagePreview
-    };
-
-    onAddToCart(product, qty, customConfig);
-
-    if (buyNow) {
-      onNavigateCheckout();
+    const match = PINCODES.find(p => p.code === pincodeInput.trim());
+    if (match) {
+      setPincodeResult(match);
+      onTriggerToast('success', 'Delivery Available', `Insured delivery to ${match.city} in ${match.days} business days.`);
+    } else {
+      setPincodeResult({
+        city: 'Verified Location',
+        days: '3 to 5',
+        expressAvailable: true,
+        codAvailable: true
+      });
+      onTriggerToast('success', 'Pincode Serviceable', 'Insured express delivery is available for your PIN code.');
     }
   };
+
+  const isCurrentWishlisted = isWishlisted || wishlistIds?.includes(currentProduct.id);
 
   return (
     <div className="bg-[#FAFAFA] min-h-screen pb-20">
       
-      {/* Breadcrumbs Top Bar */}
-      <div className="bg-white border-b border-silver-200 py-3">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex items-center space-x-2 text-xs text-silver-500">
-            <span className="hover:text-black cursor-pointer">Home</span>
+      {/* Category Breadcrumb */}
+      <div className="bg-silver-100 border-b border-silver-200 py-3 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-silver-600">
+          <nav className="flex items-center space-x-2">
+            <button onClick={() => onSelectProduct && onSelectProduct(null)} className="hover:text-[#D4AF37]">Home</button>
             <ChevronRight className="w-3 h-3 text-silver-400" />
-            <span className="capitalize">{product.category.replace('-', ' ')}</span>
+            <span className="capitalize">{currentProduct.category.replace('-', ' ')}</span>
             <ChevronRight className="w-3 h-3 text-silver-400" />
-            <span className="text-[#1A1A1A] font-semibold line-clamp-1">{product.name}</span>
+            <span className="text-[#1A1A1A] font-semibold line-clamp-1">{currentProduct.name}</span>
           </nav>
         </div>
       </div>
@@ -112,8 +104,8 @@ export default function ProductDetailPage({
             {/* Main High-Res Viewer */}
             <div className="relative aspect-square rounded-2xl overflow-hidden bg-white border border-silver-200 silver-card-shadow group">
               <img
-                src={product.images[selectedImage] || product.images[0]}
-                alt={product.name}
+                src={currentProduct.images[selectedImage] || currentProduct.images[0]}
+                alt={currentProduct.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
 
@@ -121,7 +113,7 @@ export default function ProductDetailPage({
               <div className="absolute top-4 left-4 z-10 flex flex-col space-y-1.5">
                 <span className="bg-[#1A1A1A]/90 backdrop-blur-md text-[#D4AF37] text-xs font-bold px-3 py-1 rounded-full shadow-md flex items-center space-x-1">
                   <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  <span>{product.purity}</span>
+                  <span>{currentProduct.purity}</span>
                 </span>
                 {discountPct && (
                   <span className="bg-[#D4AF37] text-black text-xs font-bold px-3 py-1 rounded-full shadow-md">
@@ -132,22 +124,22 @@ export default function ProductDetailPage({
 
               {/* Wishlist Button */}
               <button
-                onClick={() => onToggleWishlist(product)}
+                onClick={() => onToggleWishlist(currentProduct)}
                 className={`absolute top-4 right-4 z-10 p-3 rounded-full backdrop-blur-md transition-all shadow-md ${
-                  isWishlisted 
+                  isCurrentWishlisted 
                     ? 'bg-rose-600 text-white' 
                     : 'bg-white/90 text-silver-700 hover:bg-white hover:text-black'
                 }`}
                 title="Toggle Wishlist"
               >
-                <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-white' : ''}`} />
+                <Heart className={`w-5 h-5 ${isCurrentWishlisted ? 'fill-white' : ''}`} />
               </button>
             </div>
 
             {/* Thumbnail Navigation */}
-            {product.images.length > 1 && (
+            {currentProduct.images.length > 1 && (
               <div className="flex space-x-4 overflow-x-auto pb-2">
-                {product.images.map((img, idx) => (
+                {currentProduct.images.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImage(idx)}
@@ -197,14 +189,14 @@ export default function ProductDetailPage({
               <div className="flex items-center justify-between text-xs mb-2">
                 <div className="flex items-center space-x-1 text-[#D4AF37]">
                   <Star className="w-4 h-4 fill-[#D4AF37]" />
-                  <span className="font-bold text-[#1A1A1A]">{product.rating}</span>
-                  <span className="text-silver-400">({product.reviewsCount} Customer Reviews)</span>
+                  <span className="font-bold text-[#1A1A1A]">{currentProduct.rating}</span>
+                  <span className="text-silver-400">({currentProduct.reviewsCount} Customer Reviews)</span>
                 </div>
-                <span className="text-silver-400 font-mono">SKU: {product.id.toUpperCase()}</span>
+                <span className="text-silver-400 font-mono">SKU: {currentProduct.id.toUpperCase()}</span>
               </div>
 
               <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1A1A] leading-tight mb-3">
-                {product.name}
+                {currentProduct.name}
               </h1>
 
               {/* Price & Weight Card */}
@@ -212,11 +204,11 @@ export default function ProductDetailPage({
                 <div>
                   <div className="flex items-baseline space-x-3">
                     <span className="text-3xl font-bold text-[#1A1A1A]">
-                      ₹{product.price.toLocaleString('en-IN')}
+                      ₹{currentProduct.price.toLocaleString('en-IN')}
                     </span>
-                    {product.originalPrice && (
+                    {currentProduct.originalPrice && (
                       <span className="text-sm text-silver-400 line-through">
-                        ₹{product.originalPrice.toLocaleString('en-IN')}
+                        ₹{currentProduct.originalPrice.toLocaleString('en-IN')}
                       </span>
                     )}
                   </div>
@@ -227,13 +219,13 @@ export default function ProductDetailPage({
 
                 <div className="text-right border-l border-silver-300 pl-4">
                   <span className="text-[10px] text-silver-500 uppercase tracking-wider block">Net Silver</span>
-                  <span className="text-base font-bold text-[#D4AF37]">{product.weightGrams} Grams</span>
+                  <span className="text-base font-bold text-[#D4AF37]">{currentProduct.weightGrams} Grams</span>
                 </div>
               </div>
             </div>
 
             {/* Customization Form (Yatra Lockets & Engravings) */}
-            {(product.isCustomizable || product.isYatraLocket) && (
+            {(currentProduct.isCustomizable || currentProduct.isYatraLocket) && (
               <div className="p-4 rounded-xl bg-linear-to-r from-[#1A1A1A] to-[#2B2B2B] text-white border border-[#D4AF37]/40 space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider flex items-center space-x-1">
@@ -251,76 +243,58 @@ export default function ProductDetailPage({
                   </label>
                   <input
                     type="text"
+                    placeholder="e.g. Om Namah Shivaya / Sharma Parivar"
                     value={customText}
                     onChange={(e) => setCustomText(e.target.value)}
-                    placeholder="e.g. 'Om Namah Shivaya' or 'Sharma Family'"
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-xs text-white placeholder-silver-400 focus:outline-hidden focus:border-[#D4AF37]"
                   />
                 </div>
 
-                {product.isYatraLocket && (
-                  <div>
-                    <label className="text-xs text-silver-300 block mb-1">
-                      Upload Shrine / Deity Image (Optional)
+                <div>
+                  <label className="text-xs text-silver-300 block mb-1">
+                    Attach Shrine Photo for Locket Inset (Optional)
+                  </label>
+                  <div className="flex items-center space-x-3">
+                    <label className="cursor-pointer px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-semibold flex items-center space-x-1.5 border border-white/30 transition-colors">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Choose File</span>
+                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                     </label>
-                    <div className="flex items-center space-x-3">
-                      <label className="flex-1 cursor-pointer py-2 px-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-xs text-silver-200 flex items-center justify-center space-x-2">
-                        <Upload className="w-4 h-4 text-[#D4AF37]" />
-                        <span>{uploadedImagePreview ? 'Change Photo' : 'Select Photo File'}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          className="hidden"
-                        />
-                      </label>
-                      {uploadedImagePreview && (
-                        <img
-                          src={uploadedImagePreview}
-                          alt="Preview"
-                          className="w-10 h-10 rounded-lg object-cover border border-[#D4AF37]"
-                        />
-                      )}
-                    </div>
+                    {uploadedImagePreview && (
+                      <span className="text-xs text-emerald-400 flex items-center space-x-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Photo Attached</span>
+                      </span>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             )}
 
-            {/* Quantity & CTA Buttons */}
+            {/* Quantity Selector & Main Action Buttons */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center space-x-4">
-                <span className="text-xs font-bold text-silver-700">Quantity:</span>
-                <div className="flex items-center border border-silver-300 rounded-lg bg-white overflow-hidden">
+                <div className="flex items-center border border-silver-300 rounded-xl bg-silver-50 p-1">
                   <button
                     onClick={() => setQty(Math.max(1, qty - 1))}
-                    className="px-3.5 py-2 text-silver-700 hover:bg-silver-100 font-bold"
+                    className="w-8 h-8 flex items-center justify-center font-bold text-silver-700 hover:text-black rounded-lg hover:bg-silver-200"
                   >
                     -
                   </button>
-                  <span className="px-4 py-2 text-sm font-bold w-12 text-center">{qty}</span>
+                  <span className="w-10 text-center font-bold text-sm text-[#1A1A1A]">{qty}</span>
                   <button
                     onClick={() => setQty(qty + 1)}
-                    className="px-3.5 py-2 text-silver-700 hover:bg-silver-100 font-bold"
+                    className="w-8 h-8 flex items-center justify-center font-bold text-silver-700 hover:text-black rounded-lg hover:bg-silver-200"
                   >
                     +
                   </button>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <button
-                  onClick={() => handleAddToCartSubmit(false)}
-                  className="w-full py-4 bg-[#1A1A1A] hover:bg-[#D4AF37] text-white hover:text-black font-bold text-sm rounded-xl transition-all shadow-md flex items-center justify-center space-x-2"
+                  onClick={() => onAddToCart(currentProduct, qty, { customText, uploadedImagePreview })}
+                  className="flex-1 py-3.5 bg-[#1A1A1A] hover:bg-[#D4AF37] text-white hover:text-black font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2"
                 >
                   <ShoppingBag className="w-4 h-4" />
-                  <span>Add to Shopping Cart</span>
-                </button>
-
-                <button
-                  onClick={() => handleAddToCartSubmit(true)}
-                  className="w-full py-4 bg-linear-to-r from-[#D4AF37] to-[#AA820A] hover:from-[#E6CA65] hover:to-[#D4AF37] text-black font-bold text-sm rounded-xl transition-all shadow-md flex items-center justify-center space-x-2"
-                >
                   <Sparkles className="w-4 h-4" />
                   <span>Buy Now • Express Checkout</span>
                 </button>
