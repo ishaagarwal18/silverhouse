@@ -12,6 +12,7 @@ export default function ProductDetailPage({
   onAddToCart,
   onToggleWishlist,
   isWishlisted,
+  wishlistIds = [],
   onSelectProduct,
   onNavigateCheckout,
   onTriggerToast
