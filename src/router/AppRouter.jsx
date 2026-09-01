@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import HomePage from '../components/home/HomePage';
 import ProductListingPage from '../components/plp/ProductListingPage';
 import ProductDetailPage from '../components/pdp/ProductDetailPage';
@@ -15,6 +15,34 @@ export default function AppRouter({
   onTriggerToast,
   onOpenCart
 }) {
+  const navigate = useNavigate();
+
+  const handleNavigateCategory = (catId) => {
+    if (!catId || catId === 'all') {
+      navigate('/catalog');
+    } else {
+      navigate(`/category/${catId}`);
+    }
+  };
+
+  const handleNavigateSubcategory = (catId, subId) => {
+    if (!subId || subId === 'all') {
+      navigate(`/category/${catId}`);
+    } else {
+      navigate(`/category/${catId}/${subId}`);
+    }
+  };
+
+  const handleNavigateYatraCustomizer = () => {
+    navigate('/category/custom-gifting/custom-yatra-lockets');
+  };
+
+  const handleSelectProduct = (product) => {
+    if (product && product.id) {
+      navigate(`/product/${product.id}`);
+    }
+  };
+
   return (
     <Routes>
       {/* Home Page */}
@@ -24,11 +52,13 @@ export default function AppRouter({
           <HomePage
             products={products}
             categories={categories}
+            onNavigateCategory={handleNavigateCategory}
+            onNavigateYatraCustomizer={handleNavigateYatraCustomizer}
             onAddToCart={onAddToCart}
             onToggleWishlist={onToggleWishlist}
             wishlistIds={wishlistIds}
             onQuickView={onQuickView}
-            onSelectProduct={onSelectProduct}
+            onSelectProduct={handleSelectProduct}
           />
         }
       />
@@ -40,11 +70,14 @@ export default function AppRouter({
           <ProductListingPage
             products={products}
             categories={categories}
+            onSelectCategory={handleNavigateCategory}
+            onSelectSubcategory={handleNavigateSubcategory}
             onAddToCart={onAddToCart}
             onToggleWishlist={onToggleWishlist}
             wishlistIds={wishlistIds}
             onQuickView={onQuickView}
-            onSelectProduct={onSelectProduct}
+            onSelectProduct={handleSelectProduct}
+            onNavigateYatraCustomizer={handleNavigateYatraCustomizer}
           />
         }
       />
@@ -54,11 +87,15 @@ export default function AppRouter({
         element={
           <ProductListingPage
             products={products}
+            categories={categories}
+            onSelectCategory={handleNavigateCategory}
+            onSelectSubcategory={handleNavigateSubcategory}
             onAddToCart={onAddToCart}
             onToggleWishlist={onToggleWishlist}
             wishlistIds={wishlistIds}
             onQuickView={onQuickView}
-            onSelectProduct={onSelectProduct}
+            onSelectProduct={handleSelectProduct}
+            onNavigateYatraCustomizer={handleNavigateYatraCustomizer}
           />
         }
       />
@@ -68,11 +105,15 @@ export default function AppRouter({
         element={
           <ProductListingPage
             products={products}
+            categories={categories}
+            onSelectCategory={handleNavigateCategory}
+            onSelectSubcategory={handleNavigateSubcategory}
             onAddToCart={onAddToCart}
             onToggleWishlist={onToggleWishlist}
             wishlistIds={wishlistIds}
             onQuickView={onQuickView}
-            onSelectProduct={onSelectProduct}
+            onSelectProduct={handleSelectProduct}
+            onNavigateYatraCustomizer={handleNavigateYatraCustomizer}
           />
         }
       />
@@ -86,7 +127,7 @@ export default function AppRouter({
             onAddToCart={onAddToCart}
             onToggleWishlist={onToggleWishlist}
             wishlistIds={wishlistIds}
-            onSelectProduct={onSelectProduct}
+            onSelectProduct={handleSelectProduct}
             onNavigateCheckout={onOpenCart}
             onTriggerToast={onTriggerToast}
           />
