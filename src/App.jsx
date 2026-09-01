@@ -199,6 +199,7 @@ export default function App() {
       {/* Overlays & Drawers */}
       <MobileMenu
         isOpen={isMobileMenuOpen}
+        categories={categories}
         onClose={() => setIsMobileMenuOpen(false)}
         onSelectCategory={handleNavigateCategory}
         onSelectSubcategory={handleNavigateSubcategory}

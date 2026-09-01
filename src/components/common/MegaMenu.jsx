@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { CATEGORIES } from '../../data/products';
 import { ChevronRight, Sparkles, Shield, Gift, ArrowRight } from 'lucide-react';
 
-export default function MegaMenu({ onSelectCategory, onSelectSubcategory, onClose }) {
-  const [activeTab, setActiveTab] = useState(CATEGORIES[0].id);
+export default function MegaMenu({ categories, onSelectCategory, onSelectSubcategory, onClose }) {
+  const categoryList = (categories && categories.length > 0) ? categories : CATEGORIES;
+  const [activeTab, setActiveTab] = useState(categoryList[0].id);
 
-  const activeCategory = CATEGORIES.find(c => c.id === activeTab) || CATEGORIES[0];
+  const activeCategory = categoryList.find(c => c.id === activeTab) || categoryList[0];
 
   return (
     <div
@@ -19,7 +20,7 @@ export default function MegaMenu({ onSelectCategory, onSelectSubcategory, onClos
             Explore Sacred Collections
           </p>
           <ul className="mt-1 space-y-1">
-            {CATEGORIES.map((cat) => {
+            {categoryList.map((cat) => {
               const isActive = cat.id === activeTab;
               return (
                 <li key={cat.id}>
@@ -49,7 +50,7 @@ export default function MegaMenu({ onSelectCategory, onSelectSubcategory, onClos
           <div className="flex-1">
             <div className="flex items-center space-x-2 border-b border-silver-100 pb-3 mb-6">
               <h3 className="font-serif text-2xl font-bold text-[#1A1A1A]">
-                {activeCategory.name}
+                {activeCategory?.name}
               </h3>
               <span className="bg-[#D4AF37]/10 text-[#AA820A] text-xs font-semibold px-2.5 py-0.5 rounded-full">
                 BIS Certified
@@ -57,11 +58,11 @@ export default function MegaMenu({ onSelectCategory, onSelectSubcategory, onClos
             </div>
 
             <p className="text-xs text-silver-600 mb-6 font-normal">
-              {activeCategory.description}
+              {activeCategory?.description}
             </p>
 
             <div className="grid grid-cols-2 gap-4">
-              {activeCategory.subcategories.map((sub) => (
+              {(activeCategory?.subcategories || []).map((sub) => (
                 <button
                   key={sub.id}
                   onClick={() => {

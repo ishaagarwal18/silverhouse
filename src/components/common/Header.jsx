@@ -437,6 +437,7 @@ export default function Header({
       {/* MegaMenu Dropdown */}
       {isMegaMenuOpen && (
         <MegaMenu
+          categories={categories}
           onSelectCategory={onNavigateCategory}
           onSelectSubcategory={onNavigateSubcategory}
           onClose={() => setIsMegaMenuOpen(false)}

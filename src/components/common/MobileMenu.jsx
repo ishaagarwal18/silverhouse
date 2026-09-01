@@ -5,6 +5,7 @@ import { X, ChevronRight, ChevronDown, Sparkles, Phone, ShieldCheck } from 'luci
 export default function MobileMenu({
   isOpen,
   onClose,
+  categories,
   onSelectCategory,
   onSelectSubcategory,
   onNavigateYatraCustomizer
@@ -12,6 +13,8 @@ export default function MobileMenu({
   const [expandedCat, setExpandedCat] = useState(null);
 
   if (!isOpen) return null;
+
+  const categoryList = (categories && categories.length > 0) ? categories : CATEGORIES;
 
   return (
     <div className="fixed inset-0 z-50 flex lg:hidden">
@@ -62,7 +65,7 @@ export default function MobileMenu({
               Product Categories
             </p>
             <div className="space-y-1">
-              {CATEGORIES.map((cat) => {
+              {categoryList.map((cat) => {
                 const isExpanded = expandedCat === cat.id;
                 return (
                   <div key={cat.id} className="border-b border-silver-100 last:border-none">
@@ -85,7 +88,7 @@ export default function MobileMenu({
                         >
                           View All in {cat.name} →
                         </button>
-                        {cat.subcategories.map((sub) => (
+                        {(cat.subcategories || []).map((sub) => (
                           <button
                             key={sub.id}
                             onClick={() => {
