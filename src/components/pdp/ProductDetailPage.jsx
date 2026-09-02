@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PRODUCTS, PINCODES } from '../../data/products';
-import { 
-  Star, ShieldCheck, Award, Truck, Heart, ShoppingBag, 
-  Sparkles, Upload, CheckCircle2, ChevronDown, ChevronRight, RefreshCw, FileText 
+import {
+  Star, ShieldCheck, Award, Truck, Heart, ShoppingBag,
+  Sparkles, Upload, CheckCircle2, ChevronDown, ChevronRight, RefreshCw, FileText
 } from 'lucide-react';
 
 export default function ProductDetailPage({
@@ -22,7 +22,7 @@ export default function ProductDetailPage({
   const [selectedImage, setSelectedImage] = useState(0);
   const [qty, setQty] = useState(1);
   const [activeAccordion, setActiveAccordion] = useState('specs');
-  
+
   // Customizer State for Yatra Lockets / Engraving
   const [customText, setCustomText] = useState('');
   const [customGotra, setCustomGotra] = useState('');
@@ -37,7 +37,7 @@ export default function ProductDetailPage({
 
   if (!currentProduct) return null;
 
-  const discountPct = currentProduct.originalPrice 
+  const discountPct = currentProduct.originalPrice
     ? Math.round(((currentProduct.originalPrice - currentProduct.price) / currentProduct.originalPrice) * 100)
     : null;
 
@@ -83,7 +83,7 @@ export default function ProductDetailPage({
 
   return (
     <div className="bg-[#FAFAFA] min-h-screen pb-20">
-      
+
       {/* Category Breadcrumb */}
       <div className="bg-silver-100 border-b border-silver-200 py-3 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-silver-600">
@@ -96,11 +96,22 @@ export default function ProductDetailPage({
             </button>
             <ChevronRight className="w-3 h-3 text-silver-400" />
             <button
-              onClick={() => navigate(`/category/${currentProduct.category}`)}
-              className="hover:text-[#D4AF37] font-medium capitalize transition-colors cursor-pointer"
+              onClick={() => navigate('/catalog')}
+              className="hover:text-[#D4AF37] font-medium transition-colors cursor-pointer"
             >
-              {currentProduct.category_name || currentProduct.category.replace(/-/g, ' ')}
+              Catalog
             </button>
+            {currentProduct.category && (
+              <>
+                <ChevronRight className="w-3 h-3 text-silver-400" />
+                <button
+                  onClick={() => navigate(`/category/${currentProduct.category}`)}
+                  className="hover:text-[#D4AF37] font-medium capitalize transition-colors cursor-pointer"
+                >
+                  {currentProduct.category_name || currentProduct.category.replace(/-/g, ' ')}
+                </button>
+              </>
+            )}
             <ChevronRight className="w-3 h-3 text-silver-400" />
             <span className="text-[#1A1A1A] font-semibold line-clamp-1">{currentProduct.name}</span>
           </nav>
@@ -109,10 +120,10 @@ export default function ProductDetailPage({
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-          
+
           {/* Left Column: Image Gallery (7 Cols) */}
           <div className="lg:col-span-7 space-y-4">
-            
+
             {/* Main High-Res Viewer */}
             <div className="relative aspect-square rounded-2xl overflow-hidden bg-white border border-silver-200 silver-card-shadow group">
               <img
@@ -137,11 +148,10 @@ export default function ProductDetailPage({
               {/* Wishlist Button */}
               <button
                 onClick={() => onToggleWishlist(currentProduct)}
-                className={`absolute top-4 right-4 z-10 p-3 rounded-full backdrop-blur-md transition-all shadow-md ${
-                  isCurrentWishlisted 
-                    ? 'bg-rose-600 text-white' 
+                className={`absolute top-4 right-4 z-10 p-3 rounded-full backdrop-blur-md transition-all shadow-md ${isCurrentWishlisted
+                    ? 'bg-rose-600 text-white'
                     : 'bg-white/90 text-silver-700 hover:bg-white hover:text-black'
-                }`}
+                  }`}
                 title="Toggle Wishlist"
               >
                 <Heart className={`w-5 h-5 ${isCurrentWishlisted ? 'fill-white' : ''}`} />
@@ -155,11 +165,10 @@ export default function ProductDetailPage({
                   <button
                     key={idx}
                     onClick={() => setSelectedImage(idx)}
-                    className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all shrink-0 bg-white ${
-                      selectedImage === idx 
-                        ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/30 shadow-md scale-102' 
+                    className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all shrink-0 bg-white ${selectedImage === idx
+                        ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/30 shadow-md scale-102'
                         : 'border-silver-200 opacity-70 hover:opacity-100'
-                    }`}
+                      }`}
                   >
                     <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
                   </button>

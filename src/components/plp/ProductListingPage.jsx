@@ -60,7 +60,34 @@ export default function ProductListingPage({
     return () => { isMounted = false; };
   }, [selectedCategory, selectedSubcategory, selectedPurity, maxPrice, inStockOnly, sortBy]);
 
-  const activeCategoryObj = categoryList.find(c => c.id === selectedCategory);
+  const VIRTUAL_CATEGORIES = {
+    women: {
+      id: "women",
+      name: "Women's Silver Collection",
+      description: "Sacred 925 sterling silver rings, pendants, bangles, and payal for women.",
+      heroBanner: "/images/hero_silver_coins.png"
+    },
+    mens: {
+      id: "mens",
+      name: "Men's Silver Collection",
+      description: "Bold silver bracelets and rings crafted for men.",
+      heroBanner: "/images/hero_sacred_rudraksha.png"
+    },
+    kids: {
+      id: "kids",
+      name: "Kids' Silver Collection",
+      description: "Protective silver nazariya beads and baby bracelets.",
+      heroBanner: "/images/hero_baby_nazariya.png"
+    },
+    jewellery: {
+      id: "jewellery",
+      name: "All Silver Jewellery",
+      description: "Explore 925 sterling silver rings, chains, bangles, payal, and bracelets.",
+      heroBanner: "/images/hero_silver_coins.png"
+    }
+  };
+
+  const activeCategoryObj = categoryList.find(c => c.id === selectedCategory) || VIRTUAL_CATEGORIES[selectedCategory];
 
   // Fallback / Normalized Filtered List
   const filteredProducts = useMemo(() => {
@@ -70,7 +97,28 @@ export default function ProductListingPage({
     let result = [...rawList];
 
     if (selectedCategory !== 'all') {
-      result = result.filter(p => p.category === selectedCategory || p.category_slug === selectedCategory);
+      if (selectedCategory === 'women') {
+        result = result.filter(p =>
+          ['silver-rings', 'silver-pendants-chains', 'silver-bangles-kadas', 'silver-payal-anklets'].includes(p.category) ||
+          (p.recipient || p.idealFor || p.ideal_for || '').toString().toLowerCase().includes('women')
+        );
+      } else if (selectedCategory === 'mens' || selectedCategory === 'men') {
+        result = result.filter(p =>
+          p.category === 'men-silver-collection' ||
+          (p.recipient || p.idealFor || p.ideal_for || '').toString().toLowerCase().includes('men')
+        );
+      } else if (selectedCategory === 'kids') {
+        result = result.filter(p =>
+          p.category === 'kids-nazariya-bracelets' ||
+          (p.recipient || p.idealFor || p.ideal_for || '').toString().toLowerCase().includes('kids')
+        );
+      } else if (selectedCategory === 'jewellery') {
+        result = result.filter(p =>
+          ['silver-rings', 'silver-pendants-chains', 'silver-bangles-kadas', 'silver-payal-anklets', 'men-silver-collection', 'kids-nazariya-bracelets'].includes(p.category)
+        );
+      } else {
+        result = result.filter(p => p.category === selectedCategory || p.category_slug === selectedCategory);
+      }
     }
     if (selectedSubcategory !== 'all') {
       result = result.filter(p => p.subcategory === selectedSubcategory);
@@ -132,13 +180,47 @@ export default function ProductListingPage({
 
           {/* Breadcrumbs */}
           <nav className="flex items-center space-x-2 text-xs text-silver-400 mb-4">
-            <button onClick={() => onSelectCategory('all')} className="hover:text-[#D4AF37]">Home</button>
+            <button
+              onClick={() => navigate('/')}
+              className="hover:text-[#D4AF37] cursor-pointer transition-colors"
+            >
+              Home
+            </button>
             <ChevronRight className="w-3 h-3 text-silver-600" />
-            <span className="text-silver-200">Catalog</span>
-            {activeCategoryObj && (
+            {selectedCategory === 'all' ? (
+              <span className="text-[#D4AF37] font-semibold">Catalog</span>
+            ) : (
+              <button
+                onClick={() => handleCategorySelect('all')}
+                className="hover:text-[#D4AF37] cursor-pointer text-silver-200 transition-colors"
+              >
+                Catalog
+              </button>
+            )}
+            {activeCategoryObj && selectedCategory !== 'all' && (
               <>
                 <ChevronRight className="w-3 h-3 text-silver-600" />
-                <span className="text-[#D4AF37] font-semibold">{activeCategoryObj.name}</span>
+                {selectedSubcategory === 'all' ? (
+                  <span className="text-[#D4AF37] font-semibold">{activeCategoryObj.name}</span>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setSelectedSubcategory('all');
+                      navigate(`/category/${selectedCategory}`);
+                    }}
+                    className="hover:text-[#D4AF37] cursor-pointer text-silver-200 transition-colors"
+                  >
+                    {activeCategoryObj.name}
+                  </button>
+                )}
+              </>
+            )}
+            {selectedSubcategory !== 'all' && (
+              <>
+                <ChevronRight className="w-3 h-3 text-silver-600" />
+                <span className="text-[#D4AF37] font-semibold capitalize">
+                  {selectedSubcategory.replace(/-/g, ' ')}
+                </span>
               </>
             )}
           </nav>

@@ -5,6 +5,7 @@ import { Search, Heart, ShoppingBag, User, Menu, Sparkles, ChevronDown } from 'l
 export default function Header({
   cartCount,
   wishlistCount,
+  categories,
   onOpenCart,
   onOpenWishlist,
   onOpenSearch,
@@ -19,7 +20,7 @@ export default function Header({
 
   const DROPDOWNS = {
     jewellery: [
-      { label: "VIEW ALL JEWELLERY", action: () => onNavigateCategory("all") },
+      { label: "VIEW ALL JEWELLERY", action: () => onNavigateCategory("jewellery") },
       { label: "SILVER RINGS", action: () => onNavigateCategory("silver-rings") },
       { label: "SILVER PENDANTS & CHAINS", action: () => onNavigateCategory("silver-pendants-chains") },
       { label: "SILVER BANGLES & KADAS", action: () => onNavigateCategory("silver-bangles-kadas") },
@@ -32,18 +33,18 @@ export default function Header({
       { label: "LOTUS TEMPLE COINS", action: () => onNavigateCategory("silver-coins-bars") }
     ],
     women: [
-      { label: "VIEW ALL WOMEN", action: () => onNavigateCategory("silver-rings") },
+      { label: "VIEW ALL WOMEN", action: () => onNavigateCategory("women") },
       { label: "SILVER RINGS", action: () => onNavigateCategory("silver-rings") },
       { label: "SILVER PENDANTS & CHAINS", action: () => onNavigateCategory("silver-pendants-chains") },
       { label: "SILVER BANGLES & KADAS", action: () => onNavigateCategory("silver-bangles-kadas") },
       { label: "SILVER PAYAL & ANKLETS", action: () => onNavigateCategory("silver-payal-anklets") }
     ],
     mens: [
-      { label: "VIEW ALL MEN COLLECTION", action: () => onNavigateCategory("men-silver-collection") },
+      { label: "VIEW ALL MEN COLLECTION", action: () => onNavigateCategory("mens") },
       { label: "HEAVY CURB LINK BRACELET", action: () => onNavigateCategory("men-silver-collection") }
     ],
     kids: [
-      { label: "VIEW ALL KIDS", action: () => onNavigateCategory("kids-nazariya-bracelets") },
+      { label: "VIEW ALL KIDS", action: () => onNavigateCategory("kids") },
       { label: "EVIL EYE BABY NAZARIYA", action: () => onNavigateCategory("kids-nazariya-bracelets") }
     ],
     gifts: [
@@ -125,7 +126,7 @@ export default function Header({
               onMouseLeave={() => setActiveDropdown(null)}
             >
               <button
-                onClick={() => onNavigateCategory("all")}
+                onClick={() => onNavigateCategory("jewellery")}
                 className="py-6 text-xs xl:text-sm font-bold tracking-wider text-[#600814] hover:opacity-75 transition-opacity flex items-center space-x-1 uppercase focus:outline-hidden"
               >
                 <span>SILVER JEWELLERY</span>
@@ -201,7 +202,7 @@ export default function Header({
               onMouseLeave={() => setActiveDropdown(null)}
             >
               <button
-                onClick={() => onNavigateCategory("silver-rings")}
+                onClick={() => onNavigateCategory("women")}
                 className="py-6 text-xs xl:text-sm font-bold tracking-wider text-[#600814] hover:opacity-75 transition-opacity flex items-center space-x-1 uppercase focus:outline-hidden"
               >
                 <span>WOMEN</span>
@@ -239,7 +240,7 @@ export default function Header({
               onMouseLeave={() => setActiveDropdown(null)}
             >
               <button
-                onClick={() => onNavigateCategory("men-silver-collection")}
+                onClick={() => onNavigateCategory("mens")}
                 className="py-6 text-xs xl:text-sm font-bold tracking-wider text-[#600814] hover:opacity-75 transition-opacity flex items-center space-x-1 uppercase focus:outline-hidden"
               >
                 <span>MENS</span>
@@ -277,7 +278,7 @@ export default function Header({
               onMouseLeave={() => setActiveDropdown(null)}
             >
               <button
-                onClick={() => onNavigateCategory("kids-nazariya-bracelets")}
+                onClick={() => onNavigateCategory("kids")}
                 className="py-6 text-xs xl:text-sm font-bold tracking-wider text-[#600814] hover:opacity-75 transition-opacity flex items-center space-x-1 uppercase focus:outline-hidden"
               >
                 <span>KIDS</span>
