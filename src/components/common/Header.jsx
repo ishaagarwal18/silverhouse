@@ -13,7 +13,8 @@ export default function Header({
   onNavigateCategory,
   onNavigateSubcategory,
   onNavigateYatraCustomizer,
-  onOpenMobileMenu
+  onOpenMobileMenu,
+  onOpenInfoModal
 }) {
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -53,9 +54,9 @@ export default function Header({
       { label: "SILVER COINS & BARS", action: () => onNavigateCategory("silver-coins-bars") }
     ],
     more: [
-      { label: "ABOUT SILVERHOUSE", action: () => onNavigateHome() },
-      { label: "100% BIS HALLMARK CERTIFICATION", action: () => onNavigateHome() },
-      { label: "EXPRESS NATIONWIDE SHIPPING", action: () => onNavigateHome() }
+      { label: "ABOUT SILVERHOUSE", action: () => onOpenInfoModal && onOpenInfoModal('about') },
+      { label: "100% BIS HALLMARK CERTIFICATION", action: () => onOpenInfoModal && onOpenInfoModal('hallmark') },
+      { label: "EXPRESS NATIONWIDE SHIPPING", action: () => onOpenInfoModal && onOpenInfoModal('shipping') }
     ]
   };
 

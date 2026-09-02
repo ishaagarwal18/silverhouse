@@ -215,6 +215,91 @@
             box-shadow: 0 0 0 3px var(--primary-glow);
         }
 
+        .radio-group,
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .radio-item,
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: var(--transition);
+            color: var(--text-main);
+        }
+
+        .radio-item:hover,
+        .checkbox-item:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-focus);
+        }
+
+        .radio-item.active,
+        .checkbox-item.active {
+            background: var(--primary-glow);
+            border-color: var(--primary);
+            font-weight: 700;
+        }
+
+        .radio-item input[type="radio"],
+        .checkbox-item input[type="checkbox"] {
+            accent-color: var(--primary);
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+        }
+
+        .pill-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .pill-btn {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11.5px;
+            font-weight: 600;
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .pill-btn:hover {
+            background: var(--surface-hover);
+        }
+
+        .pill-btn.active {
+            background: var(--primary);
+            color: #ffffff;
+            border-color: var(--primary);
+            font-weight: 700;
+            box-shadow: 0 2px 8px var(--primary-glow);
+        }
+
+        .count-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: var(--surface-hover);
+            color: var(--text-muted);
+        }
+
         .search-field {
             position: relative;
         }
@@ -560,72 +645,98 @@
                 <input type="text" id="searchInput" placeholder="Search item, style..." oninput="applyAllFilters()" />
             </div>
 
-            <!-- 2. Strict Target Audience -->
+            <!-- 2. Target Audience (Pill Buttons) -->
             <div class="filter-field">
                 <label>Target Audience</label>
-                <select id="targetFilter" onchange="applyAllFilters()">
-                    <option value="">All Audiences</option>
-                    <option value="Women">Women Only</option>
-                    <option value="Men">Men Only</option>
-                    <option value="Kids">Kids Only</option>
-                    <option value="ALL">Unisex (ALL) Only</option>
-                </select>
+                <div class="pill-group" id="audiencePills">
+                    <button class="pill-btn active" data-val="" onclick="setAudience('')">All</button>
+                    <button class="pill-btn" data-val="Women" onclick="setAudience('Women')">Women</button>
+                    <button class="pill-btn" data-val="Men" onclick="setAudience('Men')">Men</button>
+                    <button class="pill-btn" data-val="Kids" onclick="setAudience('Kids')">Kids</button>
+                    <button class="pill-btn" data-val="ALL" onclick="setAudience('ALL')">Unisex</button>
+                </div>
             </div>
 
-            <!-- 3. Category Filter -->
+            <!-- 3. Category Filter (Radio Group) -->
             <div class="filter-field">
-                <label>Category</label>
-                <select id="categoryFilter" onchange="applyAllFilters()">
-                    <option value="">All Categories</option>
-                </select>
+                <label>Categories & Collections</label>
+                <div class="radio-group" id="categoryOptions"></div>
             </div>
 
-            <!-- 4. Purity Filter -->
+            <!-- 4. Silver Purity Filter (Radio Group) -->
             <div class="filter-field">
                 <label>Silver Purity</label>
-                <select id="purityFilter" onchange="applyAllFilters()">
-                    <option value="">All Purities</option>
-                </select>
+                <div class="radio-group" id="purityOptions"></div>
             </div>
 
-            <!-- 5. Make / Craft Type Filter -->
+            <!-- 5. Craft / Make Type Filter (Radio Group) -->
             <div class="filter-field">
                 <label>Craft / Make Type</label>
-                <select id="makeFilter" onchange="applyAllFilters()">
-                    <option value="">All Crafts / Makes</option>
-                </select>
+                <div class="radio-group" id="makeOptions"></div>
             </div>
 
-            <!-- 6. Price Range Filter -->
+            <!-- 6. Price Range Filter (Slider + Tier Pills) -->
             <div class="filter-field">
-                <label>Price Range</label>
-                <select id="priceRangeFilter" onchange="applyAllFilters()">
-                    <option value="">All Prices</option>
-                    <option value="0-2000">Under ₹2,000</option>
-                    <option value="2000-5000">₹2,000 - ₹5,000</option>
-                    <option value="5000-10000">₹5,000 - ₹10,000</option>
-                    <option value="10000-999999">Above ₹10,000</option>
-                </select>
+                <div style="display:flex; justify-content: space-between; align-items:center;">
+                    <label>Max Price Filter</label>
+                    <span id="priceValBadge" style="font-size:11px; font-weight:700; color:var(--primary);">≤
+                        ₹1,00,000</span>
+                </div>
+                <div class="range-box" style="margin-top:6px;">
+                    <input type="range" id="maxPriceInput" min="1000" max="100000" step="1000" value="100000"
+                        oninput="onMaxPriceChange(this.value)" />
+                </div>
+                <div class="pill-group" style="margin-top:8px;">
+                    <button class="pill-btn price-pill active" onclick="setPricePreset(100000)">All</button>
+                    <button class="pill-btn price-pill" onclick="setPricePreset(2500)">Under ₹2.5k</button>
+                    <button class="pill-btn price-pill" onclick="setPricePreset(5000)">Under ₹5k</button>
+                    <button class="pill-btn price-pill" onclick="setPricePreset(10000)">Under ₹10k</button>
+                </div>
             </div>
 
-            <!-- 7. Stock Filter -->
+            <!-- 7. Stock Availability Filter (Checkbox) -->
             <div class="filter-field">
-                <label>Stock Availability</label>
-                <select id="stockFilter" onchange="applyAllFilters()">
-                    <option value="">All Inventory</option>
-                    <option value="in_stock">In Stock Only</option>
-                </select>
+                <label class="checkbox-item" id="stockCheckboxItem" style="margin-top:4px;">
+                    <span style="display:flex; align-items:center; gap:8px;">
+                        <input type="checkbox" id="stockCheckbox" onchange="onStockToggle(this.checked)" />
+                        <span>Ready in Stock Only</span>
+                    </span>
+                </label>
             </div>
 
-            <!-- 8. Sort Order -->
+            <!-- 8. Sort Order (Radio Group) -->
             <div class="filter-field">
-                <label>Sort By</label>
-                <select id="sortFilter" onchange="applyAllFilters()">
-                    <option value="default">Newest First</option>
-                    <option value="price_asc">Price: Low to High</option>
-                    <option value="price_desc">Price: High to Low</option>
-                    <option value="discount_desc">Highest Discount</option>
-                </select>
+                <label>Sort By Order</label>
+                <div class="radio-group" id="sortOptions">
+                    <label class="radio-item active">
+                        <span style="display:flex; align-items:center; gap:8px;">
+                            <input type="radio" name="sort_radio" value="default" checked
+                                onchange="onSortRadioChange('default')" />
+                            <span>Newest First</span>
+                        </span>
+                    </label>
+                    <label class="radio-item">
+                        <span style="display:flex; align-items:center; gap:8px;">
+                            <input type="radio" name="sort_radio" value="price_asc"
+                                onchange="onSortRadioChange('price_asc')" />
+                            <span>Price: Low to High</span>
+                        </span>
+                    </label>
+                    <label class="radio-item">
+                        <span style="display:flex; align-items:center; gap:8px;">
+                            <input type="radio" name="sort_radio" value="price_desc"
+                                onchange="onSortRadioChange('price_desc')" />
+                            <span>Price: High to Low</span>
+                        </span>
+                    </label>
+                    <label class="radio-item">
+                        <span style="display:flex; align-items:center; gap:8px;">
+                            <input type="radio" name="sort_radio" value="discount_desc"
+                                onchange="onSortRadioChange('discount_desc')" />
+                            <span>Highest Discount</span>
+                        </span>
+                    </label>
+                </div>
             </div>
 
             <button class="btn-reset-sidebar" onclick="resetFilters()">
@@ -662,6 +773,14 @@
     <script>
         let allProducts = [];
         let filteredProducts = [];
+
+        let selectedAudience = '';
+        let selectedCategory = '';
+        let selectedPurity = '';
+        let selectedMake = '';
+        let maxPrice = 100000;
+        let stockOnly = false;
+        let selectedSort = 'default';
 
         // Theme management with LocalStorage
         function initTheme() {
@@ -702,7 +821,7 @@
                 allProducts = json.data || [];
                 filteredProducts = [...allProducts];
 
-                populateDropdowns(allProducts);
+                populateFilterOptions(allProducts);
                 applyAllFilters();
 
             } catch (err) {
@@ -717,36 +836,162 @@
             }
         }
 
-        function populateDropdowns(products) {
+        function populateFilterOptions(products) {
             // Category options
-            const catSelect = document.getElementById('categoryFilter');
-            const categories = [...new Set(products.map(p => p.category_name).filter(Boolean))];
-            categories.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c;
-                opt.innerText = c;
-                catSelect.appendChild(opt);
-            });
+            const catContainer = document.getElementById('categoryOptions');
+            if (catContainer) {
+                const categories = [...new Set(products.map(p => p.category_name).filter(Boolean))];
+                let catHTML = `
+                    <label class="radio-item ${!selectedCategory ? 'active' : ''}">
+                        <span style="display:flex; align-items:center; gap:8px;">
+                            <input type="radio" name="category_radio" value="" ${!selectedCategory ? 'checked' : ''} onchange="onCategoryRadioChange('')" />
+                            <span>All Categories</span>
+                        </span>
+                        <span class="count-badge">${products.length}</span>
+                    </label>
+                `;
+                categories.forEach(c => {
+                    const count = products.filter(p => p.category_name === c).length;
+                    const isChecked = selectedCategory === c;
+                    catHTML += `
+                        <label class="radio-item ${isChecked ? 'active' : ''}">
+                            <span style="display:flex; align-items:center; gap:8px;">
+                                <input type="radio" name="category_radio" value="${c}" ${isChecked ? 'checked' : ''} onchange="onCategoryRadioChange('${c}')" />
+                                <span>${c}</span>
+                            </span>
+                            <span class="count-badge">${count}</span>
+                        </label>
+                    `;
+                });
+                catContainer.innerHTML = catHTML;
+            }
 
             // Purity options
-            const puritySelect = document.getElementById('purityFilter');
-            const purities = [...new Set(products.map(p => p.purity).filter(Boolean))];
-            purities.forEach(pur => {
-                const opt = document.createElement('option');
-                opt.value = pur;
-                opt.innerText = pur;
-                puritySelect.appendChild(opt);
-            });
+            const purityContainer = document.getElementById('purityOptions');
+            if (purityContainer) {
+                const purities = [...new Set(products.map(p => p.purity).filter(Boolean))];
+                let purityHTML = `
+                    <label class="radio-item ${!selectedPurity ? 'active' : ''}">
+                        <span style="display:flex; align-items:center; gap:8px;">
+                            <input type="radio" name="purity_radio" value="" ${!selectedPurity ? 'checked' : ''} onchange="onPurityRadioChange('')" />
+                            <span>All Purities</span>
+                        </span>
+                    </label>
+                `;
+                purities.forEach(pur => {
+                    const isChecked = selectedPurity === pur;
+                    purityHTML += `
+                        <label class="radio-item ${isChecked ? 'active' : ''}">
+                            <span style="display:flex; align-items:center; gap:8px;">
+                                <input type="radio" name="purity_radio" value="${pur}" ${isChecked ? 'checked' : ''} onchange="onPurityRadioChange('${pur}')" />
+                                <span>${pur}</span>
+                            </span>
+                        </label>
+                    `;
+                });
+                purityContainer.innerHTML = purityHTML;
+            }
 
             // Make / Craft options
-            const makeSelect = document.getElementById('makeFilter');
-            const makes = [...new Set(products.map(p => p.make_type).filter(Boolean))];
-            makes.forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m;
-                opt.innerText = m;
-                makeSelect.appendChild(opt);
+            const makeContainer = document.getElementById('makeOptions');
+            if (makeContainer) {
+                const makes = [...new Set(products.map(p => p.make_type).filter(Boolean))];
+                let makeHTML = `
+                    <label class="radio-item ${!selectedMake ? 'active' : ''}">
+                        <span style="display:flex; align-items:center; gap:8px;">
+                            <input type="radio" name="make_radio" value="" ${!selectedMake ? 'checked' : ''} onchange="onMakeRadioChange('')" />
+                            <span>All Crafts / Makes</span>
+                        </span>
+                    </label>
+                `;
+                makes.forEach(m => {
+                    const isChecked = selectedMake === m;
+                    makeHTML += `
+                        <label class="radio-item ${isChecked ? 'active' : ''}">
+                            <span style="display:flex; align-items:center; gap:8px;">
+                                <input type="radio" name="make_radio" value="${m}" ${isChecked ? 'checked' : ''} onchange="onMakeRadioChange('${m}')" />
+                                <span>${m}</span>
+                            </span>
+                        </label>
+                    `;
+                });
+                makeContainer.innerHTML = makeHTML;
+            }
+        }
+
+        function setAudience(aud) {
+            selectedAudience = aud;
+            document.querySelectorAll('#audiencePills .pill-btn').forEach(btn => {
+                if (btn.getAttribute('data-val') === aud) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
             });
+            applyAllFilters();
+        }
+
+        function onCategoryRadioChange(val) {
+            selectedCategory = val;
+            populateFilterOptions(allProducts);
+            applyAllFilters();
+        }
+
+        function onPurityRadioChange(val) {
+            selectedPurity = val;
+            populateFilterOptions(allProducts);
+            applyAllFilters();
+        }
+
+        function onMakeRadioChange(val) {
+            selectedMake = val;
+            populateFilterOptions(allProducts);
+            applyAllFilters();
+        }
+
+        function onMaxPriceChange(val) {
+            maxPrice = Number(val);
+            document.getElementById('priceValBadge').innerText = `≤ ₹${maxPrice.toLocaleString('en-IN')}`;
+            applyAllFilters();
+        }
+
+        function setPricePreset(val) {
+            maxPrice = val;
+            const input = document.getElementById('maxPriceInput');
+            if (input) input.value = val;
+            document.getElementById('priceValBadge').innerText = `≤ ₹${val.toLocaleString('en-IN')}`;
+            document.querySelectorAll('.price-pill').forEach(btn => {
+                const isMatch = (val === 100000 && btn.innerText.includes('All')) ||
+                    (val === 2500 && btn.innerText.includes('2.5k')) ||
+                    (val === 5000 && btn.innerText.includes('5k')) ||
+                    (val === 10000 && btn.innerText.includes('10k'));
+                if (isMatch) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            applyAllFilters();
+        }
+
+        function onStockToggle(checked) {
+            stockOnly = checked;
+            const item = document.getElementById('stockCheckboxItem');
+            if (item) {
+                if (checked) item.classList.add('active');
+                else item.classList.remove('active');
+            }
+            applyAllFilters();
+        }
+
+        function onSortRadioChange(val) {
+            selectedSort = val;
+            document.querySelectorAll('#sortOptions .radio-item').forEach(lbl => {
+                const radio = lbl.querySelector('input[type="radio"]');
+                if (radio && radio.value === val) {
+                    lbl.classList.add('active');
+                } else {
+                    lbl.classList.remove('active');
+                }
+            });
+            applyAllFilters();
         }
 
         function renderProductCards(products) {
@@ -816,14 +1061,8 @@
         }
 
         function applyAllFilters() {
-            const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
-            const selectedAudience = document.getElementById('targetFilter').value.trim();
-            const selectedCategory = document.getElementById('categoryFilter').value;
-            const selectedPurity = document.getElementById('purityFilter').value;
-            const selectedMake = document.getElementById('makeFilter').value;
-            const selectedPriceRange = document.getElementById('priceRangeFilter').value;
-            const selectedStock = document.getElementById('stockFilter').value;
-            const selectedSort = document.getElementById('sortFilter').value;
+            const searchQueryInput = document.getElementById('searchInput');
+            const searchQuery = searchQueryInput ? searchQueryInput.value.toLowerCase().trim() : '';
 
             filteredProducts = allProducts.filter(p => {
                 // 1. Search Query Filter
@@ -831,7 +1070,7 @@
                     (p.product_name && p.product_name.toLowerCase().includes(searchQuery)) ||
                     (p.description && p.description.toLowerCase().includes(searchQuery));
 
-                // 2. Strict Audience Filter: Matches ONLY exact selection
+                // 2. Strict Audience Filter
                 const pAudience = (p.ideal_for || '').trim();
                 const matchesAudience = !selectedAudience || (pAudience.toLowerCase() === selectedAudience.toLowerCase());
 
@@ -844,16 +1083,12 @@
                 // 5. Make Filter
                 const matchesMake = !selectedMake || p.make_type === selectedMake;
 
-                // 6. Price Range Filter
-                let matchesPrice = true;
+                // 6. Price Filter
                 const effectivePrice = p.final_price !== undefined ? Number(p.final_price) : Number(p.price);
-                if (selectedPriceRange) {
-                    const [min, max] = selectedPriceRange.split('-').map(Number);
-                    matchesPrice = effectivePrice >= min && effectivePrice <= max;
-                }
+                const matchesPrice = effectivePrice <= maxPrice;
 
                 // 7. Stock Availability Filter
-                const matchesStock = !selectedStock || (selectedStock === 'in_stock' && Number(p.quantity) > 0);
+                const matchesStock = !stockOnly || Number(p.quantity) > 0;
 
                 return matchesSearch && matchesAudience && matchesCategory && matchesPurity && matchesMake && matchesPrice && matchesStock;
             });
@@ -874,13 +1109,45 @@
 
         function resetFilters() {
             document.getElementById('searchInput').value = '';
-            document.getElementById('targetFilter').value = '';
-            document.getElementById('categoryFilter').value = '';
-            document.getElementById('purityFilter').value = '';
-            document.getElementById('makeFilter').value = '';
-            document.getElementById('priceRangeFilter').value = '';
-            document.getElementById('stockFilter').value = '';
-            document.getElementById('sortFilter').value = 'default';
+            selectedAudience = '';
+            selectedCategory = '';
+            selectedPurity = '';
+            selectedMake = '';
+            maxPrice = 100000;
+            stockOnly = false;
+            selectedSort = 'default';
+
+            const maxPriceInput = document.getElementById('maxPriceInput');
+            if (maxPriceInput) maxPriceInput.value = 100000;
+
+            const priceValBadge = document.getElementById('priceValBadge');
+            if (priceValBadge) priceValBadge.innerText = '≤ ₹1,00,000';
+
+            const stockCheckbox = document.getElementById('stockCheckbox');
+            if (stockCheckbox) stockCheckbox.checked = false;
+
+            const stockItem = document.getElementById('stockCheckboxItem');
+            if (stockItem) stockItem.classList.remove('active');
+
+            // Reset pill buttons
+            document.querySelectorAll('#audiencePills .pill-btn').forEach(btn => {
+                if (btn.getAttribute('data-val') === '') btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+
+            // Reset sort radio
+            document.querySelectorAll('#sortOptions .radio-item').forEach(lbl => {
+                const radio = lbl.querySelector('input[type="radio"]');
+                if (radio && radio.value === 'default') {
+                    radio.checked = true;
+                    lbl.classList.add('active');
+                } else {
+                    if (radio) radio.checked = false;
+                    lbl.classList.remove('active');
+                }
+            });
+
+            populateFilterOptions(allProducts);
             applyAllFilters();
         }
 

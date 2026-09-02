@@ -10,6 +10,7 @@ import Footer from './components/common/Footer';
 import CartDrawer from './components/cart/CartDrawer';
 import CheckoutModal from './components/cart/CheckoutModal';
 import WishlistDrawer from './components/wishlist/WishlistDrawer';
+import InfoModal from './components/common/InfoModal';
 import AppRouter from './router/AppRouter';
 import { fetchProducts, fetchCategories } from './services/api';
 import { PRODUCTS, CATEGORIES } from './data/products';
@@ -52,6 +53,11 @@ export default function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
+  const [infoModalTab, setInfoModalTab] = useState(null);
+
+  const handleOpenInfoModal = (tab = 'about') => {
+    setInfoModalTab(tab);
+  };
   
   // Checkout Modal State
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -172,6 +178,7 @@ export default function App() {
           onNavigateSubcategory={handleNavigateSubcategory}
           onNavigateYatraCustomizer={handleNavigateYatraCustomizer}
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+          onOpenInfoModal={handleOpenInfoModal}
         />
 
         {/* Main View Router */}
@@ -194,6 +201,7 @@ export default function App() {
       <Footer
         onNavigateCategory={handleNavigateCategory}
         onNavigateYatraCustomizer={handleNavigateYatraCustomizer}
+        onOpenInfoModal={handleOpenInfoModal}
       />
 
       {/* Overlays & Drawers */}
@@ -204,6 +212,7 @@ export default function App() {
         onSelectCategory={handleNavigateCategory}
         onSelectSubcategory={handleNavigateSubcategory}
         onNavigateYatraCustomizer={handleNavigateYatraCustomizer}
+        onOpenInfoModal={handleOpenInfoModal}
       />
 
       <SearchModal
@@ -252,6 +261,13 @@ export default function App() {
         appliedCoupon={checkoutData.appliedCoupon}
         onClearCart={() => setCartItems([])}
         onNavigateHome={handleNavigateHome}
+      />
+
+      <InfoModal
+        isOpen={!!infoModalTab}
+        initialTab={infoModalTab || 'about'}
+        onClose={() => setInfoModalTab(null)}
+        onNavigateCategory={handleNavigateCategory}
       />
 
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />

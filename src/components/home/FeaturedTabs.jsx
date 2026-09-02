@@ -4,9 +4,9 @@ import { Heart, Eye, ShoppingBag, Star, Sparkles, ArrowRight } from 'lucide-reac
 
 const TABS = [
   { id: "bestsellers", label: "Best Sellers", filter: (p) => p.isBestSeller },
-  { id: "kids-nazariya", label: "Kids Nazariya", filter: (p) => p.category === "kids-baby" },
-  { id: "pure-999-coins", label: "Pure 999 Coins", filter: (p) => p.purityCode === "999" },
-  { id: "custom-gifting", label: "Custom Gifting", filter: (p) => p.isCustomizable }
+  { id: "kids-nazariya", label: "Kids Nazariya", filter: (p) => p.category === "kids-nazariya-bracelets" || p.category === "kids-baby" || (p.recipient || p.idealFor || p.ideal_for || '').toString().toLowerCase().includes('kids') },
+  { id: "pure-999-coins", label: "Pure 999 Coins", filter: (p) => p.purityCode === "999" || p.category === "silver-coins-bars" },
+  { id: "custom-gifting", label: "Custom Gifting", filter: (p) => p.isCustomizable || p.category === "silver-pendants-chains" }
 ];
 
 export default function FeaturedTabs({

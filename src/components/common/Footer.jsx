@@ -116,11 +116,21 @@ export default function Footer({ onNavigateCategory, onNavigateYatraCustomizer }
               Assurance & Care
             </h4>
             <ul className="space-y-2.5 text-silver-300">
-              <li><a href="#hallmark" className="hover:text-white transition-colors">BIS Hallmarking Verification</a></li>
-              <li><a href="#shipping" className="hover:text-white transition-colors">Transit Insurance Policy</a></li>
-              <li><a href="#returns" className="hover:text-white transition-colors">7-Day Easy Exchange</a></li>
-              <li><a href="#cleaning" className="hover:text-white transition-colors">Silver Cleaning & Storage Guide</a></li>
-              <li><a href="#bulk" className="hover:text-white transition-colors">Corporate Festive Gifting</a></li>
+              <li>
+                <button onClick={() => onOpenInfoModal && onOpenInfoModal('hallmark')} className="hover:text-white transition-colors text-left">
+                  BIS Hallmarking Verification
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onOpenInfoModal && onOpenInfoModal('shipping')} className="hover:text-white transition-colors text-left">
+                  Transit Insurance Policy
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onOpenInfoModal && onOpenInfoModal('about')} className="hover:text-white transition-colors text-left">
+                  About SilverHouse Story
+                </button>
+              </li>
             </ul>
           </div>
 

@@ -8,7 +8,7 @@ const SLIDES = [
     title: "Sacred Pure Silver Murti for Divine Blessings",
     subtitle: "Handcrafted 925 & 999 Pure Silver Idols of Lord Ganesha & Goddess Lakshmi. BIS Hallmarked with Anti-Tarnish Protection.",
     ctaText: "Explore Silver Murti",
-    categoryId: "silver-idols",
+    categoryId: "silver-religious-idols",
     bgImage: "/images/hero_silver_idols.png",
     badge: "100% Pure Hallmarked"
   },
@@ -18,7 +18,7 @@ const SLIDES = [
     title: "Protective Silver Nazariya & Bangles for Babies",
     subtitle: "Keep your little ones safe with hypoallergenic 925 sterling silver bracelets, black beads & jingling ghungroo bangles.",
     ctaText: "Shop Kids Collection",
-    categoryId: "kids-baby",
+    categoryId: "kids-nazariya-bracelets",
     bgImage: "/images/hero_baby_nazariya.png",
     badge: "Hypoallergenic 925"
   },
