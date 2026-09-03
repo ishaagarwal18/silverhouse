@@ -16,7 +16,7 @@ A full-stack e-commerce application specializing in premium silver artifacts, co
 - **Responsive Design**: Designed with Tailwind CSS v4 and Lucide React Icons for a seamless mobile and desktop experience.
 
 ### ⚙️ Backend (Node.js & Express API)
-- **RESTful Endpoints**: Unified API route structure (`/api/data`, `/api/fetch`) interacting with Microsoft SQL Server stored procedures.
+- **RESTful Endpoints**: Unified API route structure (`/api/data`, `/catalog`) interacting with Microsoft SQL Server stored procedures.
 - **Stored Procedure Integration**: Handles data queries, status verification, JSON payload parsing, and parameter binding (`dbo.SP_GETDATA` & `dbo.SP_Fetchdata`).
 - **Admin & Management Views**: Serves static HTML utilities (`public/index.html`, `public/catalog.html`, `public/product-form.html`) for product catalog management.
 
@@ -128,9 +128,8 @@ SilverHouse/
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `POST` | `/api/data` | Single unified endpoint executing `SP_GETDATA` for creation, updates, or custom ops. |
-| `GET` / `POST` | `/api/fetch` | Fetches products with joined category & image lists via `SP_Fetchdata`. |
-| `GET` | `/catalog` | Serves the admin product catalog view. |
+| `POST` | `/api/data` | Single unified endpoint executing `dbo.SP_GETDATA` for all entity queries, products, categories & mutations. |
+| `GET` | `/catalog` | Serves the static HTML product catalog view (`catalog.html`). |
 
 ---
 

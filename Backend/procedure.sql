@@ -232,6 +232,56 @@ BEGIN
             THROW;
         END CATCH
     END
+
+    -- SELECT
+    ELSE IF @Opr = 'SELECT'
+    BEGIN
+        SELECT 
+            p.product_id,
+            p.title AS product_name,
+            p.title AS title,
+            p.title AS name,
+            p.purity,
+            p.[weight],
+            p.[description],
+            p.price,
+            p.discount,
+            CAST(p.price - (p.price * ISNULL(p.discount, 0) / 100.0) AS DECIMAL(18,2)) AS final_price,
+            p.quantity,
+            p.ideal_for,
+            p.packaging,
+            p.labour_cost,
+            p.actual_cost,
+            p.[priority],
+
+            -- Category Details
+            p.category_id,
+            c.[name] AS category_name,
+            c.slug AS category_slug,
+
+            -- Make Details
+            p.m_id AS make_id,
+            m.[type] AS make_type,
+
+            -- Aggregated Array of Images
+            ISNULL(
+                (
+                    SELECT 
+                        img.image_id,
+                        img.image_url
+                    FROM dbo.product_image pi
+                    INNER JOIN dbo.[image] img ON pi.image_id = img.image_id
+                    WHERE pi.product_id = p.product_id
+                    FOR JSON PATH
+                ),
+                '[]'
+            ) AS images_json
+
+        FROM dbo.product p
+        LEFT JOIN dbo.category c ON p.category_id = c.category_id
+        LEFT JOIN dbo.make_master m ON p.m_id = m.m_id
+        WHERE (@TargetId IS NULL OR p.product_id = @TargetId);
+    END
 END;
 GO
 -- =========================================================================

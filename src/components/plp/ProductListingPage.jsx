@@ -707,15 +707,23 @@ export default function ProductListingPage({
                         onClick={() => onSelectProduct(product)}
                       >
                         <img
-                          src={product.images[0]}
+                          src={Array.isArray(product.images) && product.images[0] ? product.images[0] : 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80'}
                           alt={product.name}
                           className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80';
+                          }}
                         />
-                        {product.images[1] && (
+                        {Array.isArray(product.images) && product.images[1] && (
                           <img
                             src={product.images[1]}
                             alt={product.name}
                             className="w-full h-full object-cover absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80';
+                            }}
                           />
                         )}
 

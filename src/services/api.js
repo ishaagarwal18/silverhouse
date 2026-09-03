@@ -62,24 +62,17 @@ export function normalizeProduct(rawItem) {
 }
 
 /**
- * Fetches all products from Backend API (/api/fetch).
+ * Fetches all products from Backend API (/api/data).
  * Falls back to mock PRODUCTS dataset if backend is unreachable or returns error.
  */
 export async function fetchProducts(filters = null) {
   try {
-    const response = await fetch(`${API_BASE_URL}/fetch`, {
-      method: filters ? 'POST' : 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: filters ? JSON.stringify({ filters }) : undefined,
+    const json = await postApiData({
+      proc_name: 'product',
+      opr: 'SELECT',
+      table_values: filters ? { filters } : null
     });
 
-    if (!response.ok) {
-      throw new Error(`Server returned HTTP ${response.status}`);
-    }
-
-    const json = await response.json();
     if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
       const normalized = json.data.map(normalizeProduct).filter(Boolean);
       console.log(`[API Service] Loaded ${normalized.length} products live from Express Backend.`);
@@ -89,7 +82,7 @@ export async function fetchProducts(filters = null) {
       return PRODUCTS;
     }
   } catch (error) {
-    console.warn('[API Service] Could not connect to Express Backend at /api/fetch. Using client fallback data.', error.message);
+    console.warn('[API Service] Could not connect to Express Backend at /api/data. Using client fallback data.', error.message);
     return PRODUCTS;
   }
 }
@@ -126,12 +119,13 @@ export async function fetchCategories() {
  */
 export async function fetchProductById(productId) {
   try {
-    const response = await fetch(`${API_BASE_URL}/fetch?condition=${encodeURIComponent(productId)}`);
-    if (response.ok) {
-      const json = await response.json();
-      if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
-        return normalizeProduct(json.data[0]);
-      }
+    const json = await postApiData({
+      proc_name: 'product',
+      opr: 'SELECT',
+      condition: productId
+    });
+    if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+      return normalizeProduct(json.data[0]);
     }
   } catch (err) {
     console.warn('[API Service] fetchProductById warning:', err);

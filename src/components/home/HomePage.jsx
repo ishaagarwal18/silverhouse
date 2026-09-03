@@ -33,6 +33,7 @@ export default function HomePage({
         onQuickView={onQuickView}
         onSelectProduct={onSelectProduct}
         onNavigateYatraCustomizer={onNavigateYatraCustomizer}
+        onNavigateCategory={onNavigateCategory}
       />
       <YatraLocketSpotlight onNavigateCustomizer={onNavigateYatraCustomizer} />
       <Testimonials />

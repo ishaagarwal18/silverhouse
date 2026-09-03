@@ -814,7 +814,11 @@
 
         async function fetchCatalogData() {
             try {
-                const res = await fetch('/api/fetch');
+                const res = await fetch('/api/data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ proc_name: 'product', opr: 'SELECT' })
+                });
                 const json = await res.json();
                 if (!json.success) throw new Error(json.status || json.error);
 
@@ -840,7 +844,8 @@
             // Category options
             const catContainer = document.getElementById('categoryOptions');
             if (catContainer) {
-                const categories = [...new Set(products.map(p => p.category_name).filter(Boolean))];
+                const getCatName = p => p.category_name || p.category || p.category_slug || '';
+                const categories = [...new Set(products.map(getCatName).filter(Boolean))];
                 let catHTML = `
                     <label class="radio-item ${!selectedCategory ? 'active' : ''}">
                         <span style="display:flex; align-items:center; gap:8px;">
@@ -851,7 +856,7 @@
                     </label>
                 `;
                 categories.forEach(c => {
-                    const count = products.filter(p => p.category_name === c).length;
+                    const count = products.filter(p => getCatName(p) === c).length;
                     const isChecked = selectedCategory === c;
                     catHTML += `
                         <label class="radio-item ${isChecked ? 'active' : ''}">
@@ -1024,18 +1029,21 @@
                 const origPriceFormatted = Number(p.price).toLocaleString('en-IN');
                 const inStock = p.quantity && Number(p.quantity) > 0;
 
+                const productName = p.product_name || p.title || p.name || 'Silver Jewelry Item';
+                const catName = p.category_name || p.category || p.category_slug || 'Silver';
+
                 const card = document.createElement('div');
                 card.className = 'product-card';
                 card.innerHTML = `
                     <div class="card-media">
                         ${hasDiscount ? `<span class="badge-discount">${p.discount}% OFF</span>` : ''}
-                        <span class="badge-category">${p.category_name || 'Silver'}</span>
+                        <span class="badge-category">${catName}</span>
                         <span class="badge-purity">${p.purity || '92.5'}</span>
-                        <img src="${imgUrl}" alt="${p.product_name}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80'" />
+                        <img src="${imgUrl}" alt="${productName}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80'" />
                     </div>
 
                     <div class="card-body">
-                        <h3 class="product-title" title="${p.product_name}">${p.product_name}</h3>
+                        <h3 class="product-title" title="${productName}">${productName}</h3>
                         <p class="product-desc">${p.description || 'Authentic pure silver jewelry design.'}</p>
 
                         <div class="specs-row">

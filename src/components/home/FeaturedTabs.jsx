@@ -16,13 +16,16 @@ export default function FeaturedTabs({
   wishlistIds,
   onQuickView,
   onSelectProduct,
-  onNavigateYatraCustomizer
+  onNavigateYatraCustomizer,
+  onNavigateCategory
 }) {
   const [activeTab, setActiveTab] = useState("bestsellers");
 
   const currentTab = TABS.find((t) => t.id === activeTab) || TABS[0];
   const allProds = (products && products.length > 0) ? products : PRODUCTS;
-  const items = allProds.filter(currentTab.filter).slice(0, 8);
+  const filteredList = allProds.filter(currentTab.filter);
+  // Display up to 16 products on the home page section
+  const items = filteredList.slice(0, 16);
 
   return (
     <section className="py-16 bg-white border-y border-silver-200">
@@ -79,15 +82,23 @@ export default function FeaturedTabs({
                   onClick={() => onSelectProduct(product)}
                 >
                   <img
-                    src={product.images[0]}
+                    src={Array.isArray(product.images) && product.images[0] ? product.images[0] : 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80'}
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80';
+                    }}
                   />
-                  {product.images[1] && (
+                  {Array.isArray(product.images) && product.images[1] && (
                     <img
                       src={product.images[1]}
                       alt={product.name}
                       className="w-full h-full object-cover absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80';
+                      }}
                     />
                   )}
 
@@ -103,40 +114,48 @@ export default function FeaturedTabs({
                     )}
                   </div>
 
-                  {/* Top Right Wishlist Button */}
+                  {/* Wishlist Button */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onToggleWishlist(product);
+                      onToggleWishlist(product.id);
                     }}
-                    className={`absolute top-3 right-3 z-10 p-2 rounded-full backdrop-blur-md transition-all shadow-md ${
-                      isWishlisted 
-                        ? 'bg-rose-600 text-white' 
-                        : 'bg-white/80 text-silver-700 hover:bg-white hover:text-black'
+                    className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-md transition-all shadow-xs z-10 ${
+                      isWishlisted
+                        ? 'bg-red-500 text-white'
+                        : 'bg-white/80 text-silver-700 hover:bg-white hover:text-red-500'
                     }`}
-                    title="Toggle Wishlist"
                   >
                     <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-white' : ''}`} />
                   </button>
 
-                  {/* Quick View Hover Overlay Button */}
-                  <div className="absolute inset-x-4 bottom-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onQuickView(product);
-                      }}
-                      className="w-full py-2 bg-white/95 backdrop-blur-xs hover:bg-[#1A1A1A] text-[#1A1A1A] hover:text-white text-xs font-semibold rounded-lg shadow-lg transition-colors flex items-center justify-center space-x-1.5"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>Quick View</span>
-                    </button>
-                  </div>
+                  {/* Quick View Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onQuickView(product);
+                    }}
+                    className="absolute bottom-3 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/90 backdrop-blur-md text-[#1A1A1A] font-semibold text-xs rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center space-x-1.5 hover:bg-[#1A1A1A] hover:text-white z-10"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Quick View</span>
+                  </button>
                 </div>
 
                 {/* Content Area */}
-                <div className="p-4 flex-1 flex flex-col justify-between">
+                <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
+                    {/* Category Subhead */}
+                    <div className="flex items-center justify-between text-[11px] text-[#AA820A] font-bold uppercase tracking-wider mb-1">
+                      <span>{product.categoryName || product.category_name || 'Pure Silver'}</span>
+                      {product.isCustomizable && (
+                        <span className="flex items-center space-x-1 text-[#D4AF37]">
+                          <Sparkles className="w-3 h-3" />
+                          <span>Custom</span>
+                        </span>
+                      )}
+                    </div>
+
                     {/* Weight & Rating */}
                     <div className="flex items-center justify-between text-[11px] text-silver-500 mb-1">
                       <span className="font-semibold text-silver-700">Weight: {product.weightGrams}g</span>
@@ -191,6 +210,18 @@ export default function FeaturedTabs({
             );
           })}
         </div>
+
+        {/* View More Button Link */}
+        <div className="mt-12 text-center">
+          <button
+            onClick={() => onNavigateCategory && onNavigateCategory('all')}
+            className="inline-flex items-center space-x-2 px-8 py-3.5 bg-[#1A1A1A] hover:bg-[#D4AF37] text-white hover:text-black font-semibold text-xs rounded-full shadow-md transition-all duration-300 hover:scale-105 group cursor-pointer"
+          >
+            <span>View All Sacred Collections ({allProds.length} Products) ...more</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </button>
+        </div>
+
       </div>
     </section>
   );

@@ -127,9 +127,13 @@ export default function ProductDetailPage({
             {/* Main High-Res Viewer */}
             <div className="relative aspect-square rounded-2xl overflow-hidden bg-white border border-silver-200 silver-card-shadow group">
               <img
-                src={currentProduct.images[selectedImage] || currentProduct.images[0]}
+                src={Array.isArray(currentProduct.images) && currentProduct.images[selectedImage] ? currentProduct.images[selectedImage] : (currentProduct.images && currentProduct.images[0] ? currentProduct.images[0] : 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80')}
                 alt={currentProduct.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80';
+                }}
               />
 
               {/* Purity & Discount Badges */}
@@ -159,7 +163,7 @@ export default function ProductDetailPage({
             </div>
 
             {/* Thumbnail Navigation */}
-            {currentProduct.images.length > 1 && (
+            {Array.isArray(currentProduct.images) && currentProduct.images.length > 1 && (
               <div className="flex space-x-4 overflow-x-auto pb-2">
                 {currentProduct.images.map((img, idx) => (
                   <button
@@ -170,7 +174,15 @@ export default function ProductDetailPage({
                         : 'border-silver-200 opacity-70 hover:opacity-100'
                       }`}
                   >
-                    <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
+                    <img 
+                      src={img} 
+                      alt={`Thumbnail ${idx}`} 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80';
+                      }}
+                    />
                   </button>
                 ))}
               </div>

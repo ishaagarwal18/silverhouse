@@ -32,6 +32,53 @@ app.post('/api/data', async (req, res) => {
             });
         }
 
+        // Special handler: When selecting products, use SP_Fetchdata to guarantee full joined dataset (categories & images)
+        if (proc_name.toLowerCase() === 'product' && opr.toUpperCase() === 'SELECT') {
+            try {
+                const fetchReq = pool.request();
+                fetchReq.input('proc_name', sql.NVarChar(50), 'product');
+                fetchReq.input('JSONstr', sql.NVarChar(sql.MAX), jsonStr);
+                fetchReq.input('Condition', sql.NVarChar(255), condition !== undefined && condition !== null ? String(condition) : null);
+
+                const fetchResult = await fetchReq.execute('dbo.SP_Fetchdata');
+                const recordsets = fetchResult.recordsets;
+                let data = recordsets.length > 1
+                    ? recordsets[0]
+                    : (recordsets.length === 1 && !recordsets[0][0]?.Response_Status ? recordsets[0] : []);
+
+                if (Array.isArray(data)) {
+                    data = data.map(item => {
+                        if (item.images_json) {
+                            try {
+                                item.images = JSON.parse(item.images_json);
+                            } catch (e) {
+                                item.images = [];
+                            }
+                            delete item.images_json;
+                        } else if (!item.images) {
+                            item.images = [];
+                        }
+                        if (!item.product_name && item.title) {
+                            item.product_name = item.title;
+                        }
+                        if (!item.category_name && item.category) {
+                            item.category_name = item.category;
+                        }
+                        return item;
+                    });
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    status: 'OK',
+                    total: data.length,
+                    data: data
+                });
+            } catch (fetchErr) {
+                console.warn('[API Data] SP_Fetchdata execution fallback to SP_GETDATA:', fetchErr.message);
+            }
+        }
+
         const request = pool.request();
         request.input('proc_name', sql.NVarChar(50), proc_name);
         request.input('Opr', sql.NVarChar(10), opr);
@@ -58,7 +105,27 @@ app.post('/api/data', async (req, res) => {
             });
         }
 
-        const data = recordsets.length > 1 ? recordsets[0] : (recordsets.length === 1 && !recordsets[0][0]?.Response_Status ? recordsets[0] : null);
+        let data = recordsets.length > 1 ? recordsets[0] : (recordsets.length === 1 && !recordsets[0][0]?.Response_Status ? recordsets[0] : null);
+
+        if (Array.isArray(data)) {
+            data = data.map(item => {
+                if (item.images_json) {
+                    try {
+                        item.images = JSON.parse(item.images_json);
+                    } catch (e) {
+                        item.images = [];
+                    }
+                    delete item.images_json;
+                }
+                if (!item.product_name && item.title) {
+                    item.product_name = item.title;
+                }
+                if (!item.category_name && item.category) {
+                    item.category_name = item.category;
+                }
+                return item;
+            });
+        }
 
         return res.status(200).json({
             success: true,
@@ -75,77 +142,7 @@ app.post('/api/data', async (req, res) => {
     }
 });
 
-// 2. GET or POST /api/fetch to retrieve all products with joined category & images
-app.all('/api/fetch', async (req, res) => {
-    try {
-        const pool = await poolPromise;
-        if (!pool) {
-            return res.status(500).json({
-                success: false,
-                error: 'Database connection is not available.'
-            });
-        }
-
-        const proc_name = req.body?.proc_name || req.query?.proc_name || 'product';
-        const condition = req.body?.condition || req.query?.condition || null;
-        const filters = req.body?.filters || (Object.keys(req.query || {}).length > 0 ? req.query : null);
-        const jsonStr = filters ? JSON.stringify(filters) : null;
-
-        const request = pool.request();
-        request.input('proc_name', sql.NVarChar(50), proc_name);
-        request.input('JSONstr', sql.NVarChar(sql.MAX), jsonStr);
-        request.input('Condition', sql.NVarChar(255), condition !== null ? String(condition) : null);
-
-        const result = await request.execute('dbo.SP_Fetchdata');
-
-        const recordsets = result.recordsets;
-        const statusRecord = recordsets.length > 0 ? recordsets[recordsets.length - 1] : null;
-        const status = statusRecord && statusRecord[0] ? statusRecord[0].Response_Status : 'OK';
-
-        if (typeof status === 'string' && status.startsWith('ERROR')) {
-            return res.status(400).json({
-                success: false,
-                status: status
-            });
-        }
-
-        let data = recordsets.length > 1
-            ? recordsets[0]
-            : (recordsets.length === 1 && !recordsets[0][0]?.Response_Status ? recordsets[0] : []);
-
-        // Parse images_json string into a clean array of image objects
-        if (Array.isArray(data)) {
-            data = data.map(item => {
-                if (item.images_json) {
-                    try {
-                        item.images = JSON.parse(item.images_json);
-                    } catch (e) {
-                        item.images = [];
-                    }
-                    delete item.images_json;
-                } else {
-                    item.images = [];
-                }
-                return item;
-            });
-        }
-
-        return res.status(200).json({
-            success: true,
-            total: data.length,
-            data: data
-        });
-
-    } catch (err) {
-        console.error('[Fetch Error]:', err.message);
-        return res.status(500).json({
-            success: false,
-            error: err.message
-        });
-    }
-});
-
-// 3. Static assets & HTML views
+// 2. Static assets & HTML views
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
@@ -174,5 +171,5 @@ app.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
     console.log(`Admin Dashboard: http://localhost:${PORT}`);
     console.log(`Product Catalog: http://localhost:${PORT}/catalog`);
-    console.log(`API Fetch Endpoint: http://localhost:${PORT}/api/fetch`);
+    console.log(`Data API Endpoint: http://localhost:${PORT}/api/data`);
 });

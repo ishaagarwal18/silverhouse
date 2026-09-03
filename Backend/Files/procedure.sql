@@ -8,6 +8,9 @@ IF OBJECT_ID('dbo.SP_category', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_category;
 IF OBJECT_ID('dbo.SP_image', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_image;
 IF OBJECT_ID('dbo.SP_make_master', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_make_master;
 IF OBJECT_ID('dbo.SP_product_image', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_product_image;
+IF OBJECT_ID('dbo.SP_user', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_user;
+IF OBJECT_ID('dbo.SP_address', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_address;
+IF OBJECT_ID('dbo.SP_cart', 'P') IS NOT NULL DROP PROCEDURE dbo.SP_cart;
 GO
 
 -- =========================================================================
@@ -231,6 +234,56 @@ BEGIN
             IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
             THROW;
         END CATCH
+    END
+
+    -- SELECT
+    ELSE IF @Opr = 'SELECT'
+    BEGIN
+        SELECT 
+            p.product_id,
+            p.title AS product_name,
+            p.title AS title,
+            p.title AS name,
+            p.purity,
+            p.[weight],
+            p.[description],
+            p.price,
+            p.discount,
+            CAST(p.price - (p.price * ISNULL(p.discount, 0) / 100.0) AS DECIMAL(18,2)) AS final_price,
+            p.quantity,
+            p.ideal_for,
+            p.packaging,
+            p.labour_cost,
+            p.actual_cost,
+            p.[priority],
+
+            -- Category Details
+            p.category_id,
+            c.[name] AS category_name,
+            c.slug AS category_slug,
+
+            -- Make Details
+            p.m_id AS make_id,
+            m.[type] AS make_type,
+
+            -- Aggregated Array of Images
+            ISNULL(
+                (
+                    SELECT 
+                        img.image_id,
+                        img.image_url
+                    FROM dbo.product_image pi
+                    INNER JOIN dbo.[image] img ON pi.image_id = img.image_id
+                    WHERE pi.product_id = p.product_id
+                    FOR JSON PATH
+                ),
+                '[]'
+            ) AS images_json
+
+        FROM dbo.product p
+        LEFT JOIN dbo.category c ON p.category_id = c.category_id
+        LEFT JOIN dbo.make_master m ON p.m_id = m.m_id
+        WHERE (@TargetId IS NULL OR p.product_id = @TargetId);
     END
 END;
 GO
@@ -660,11 +713,757 @@ END;
 GO
 
 -- =========================================================================
--- PROCEDURE 6: SP_GETDATA
+-- PROCEDURE 6: SP_User
 -- =========================================================================
-USE SilverHouse;
+CREATE PROCEDURE dbo.SP_user
+    @Opr       NVARCHAR(10),
+    @JSONstr   NVARCHAR(MAX) = NULL,
+    @Condition NVARCHAR(MAX) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @TargetUserId INT = TRY_CAST(@Condition AS INT);
+    DECLARE @FullName NVARCHAR(100);
+    DECLARE @Email NVARCHAR(150);
+    DECLARE @Phone NVARCHAR(20);
+    DECLARE @PasswordHash NVARCHAR (255);
+    DECLARE @Role NVARCHAR(20);
+
+    IF @JSONstr IS NOT NULL AND ISJSON(@JSONstr) > 0
+    BEGIN
+        SELECT
+            @FullName        = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.full_name'))),
+            @Email = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.email'))),
+            @Phone       = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.phone'))),
+            @PasswordHash    = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.password_hash'))),
+            @Role    = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.role')));
+    END
+
+    IF @Opr ='Select'
+    BEGIN
+       IF @TargetUserId IS NOT NULL AND @TargetUserId > 0
+        BEGIN
+            SELECT user_id, full_name, email, phone, [role], created_at
+            FROM dbo.[user]
+            WHERE user_id = @TargetUserId;
+        END
+        ELSE IF @Email IS NOT NULL AND @Email <> ''
+        BEGIN
+            SELECT user_id, full_name, email, phone, password_hash, [role], created_at
+            FROM dbo.[user]
+            WHERE email = @Email;
+        END
+        ELSE
+        BEGIN
+            SELECT user_id, full_name, email, phone, [role], created_at
+            FROM dbo.[user]
+            ORDER BY user_id DESC;
+        END
+        RETURN;
+    END
+    IF @Opr='ADD'
+    BEGIN
+        IF @FullName IS NULL OR LEN(@FullName) = 0
+        BEGIN
+            RAISERROR('Validation Error: full_name cannot be blank.', 16, 1);
+            RETURN;
+        END
+        IF @Email IS NULL OR LEN(@Email) = 0
+        BEGIN
+            RAISERROR('Validation Error: email cannot be blank.', 16, 1);
+            RETURN;
+        END
+        IF @PasswordHash IS NULL OR LEN(@PasswordHash) = 0
+        BEGIN
+            RAISERROR('Validation Error: password_hash cannot be blank.', 16, 1);
+            RETURN;
+        END
+
+        IF EXISTS (SELECT 1 FROM dbo.[user] WHERE email = @Email)
+        BEGIN
+            RAISERROR('Validation Error: An account with this email already exists.', 16, 1);
+            RETURN;
+        END
+
+        IF @Role IS NULL OR @Role = '' SET @Role = 'CUSTOMER';
+
+        INSERT INTO dbo.[user] (full_name, email, phone, password_hash, [role])
+        VALUES (@FullName, @Email, @Phone, @PasswordHash, @Role);
+
+        DECLARE @NewUserId INT = SCOPE_IDENTITY();
+        SELECT @NewUserId AS user_id, 'User registered successfully' AS [Message];
+        RETURN;
+    END
+
+    IF @Opr='Edit'
+    BEGIN
+        IF @TargetUserId IS NULL OR NOT EXISTS (SELECT 1 FROM dbo.[user] WHERE user_id = @TargetUserId)
+        BEGIN
+            RAISERROR('Not Found: User with ID %d does not exist.', 16, 1, @TargetUserId);
+            RETURN;
+        END
+
+        IF @Email IS NOT NULL AND EXISTS (SELECT 1 FROM dbo.[user] WHERE email = @Email AND user_id <> @TargetUserId)
+        BEGIN
+            RAISERROR('Validation Error: Email is already taken by another account.', 16, 1);
+            RETURN;
+        END
+
+        UPDATE dbo.[user]
+        SET full_name     = ISNULL(@FullName, full_name),
+            email         = ISNULL(@Email, email),
+            phone         = ISNULL(@Phone, phone),
+            password_hash = ISNULL(@PasswordHash, password_hash),
+            [role]        = ISNULL(@Role, [role])
+        WHERE user_id = @TargetUserId;
+
+        SELECT @TargetUserId AS user_id, 'User profile updated successfully' AS [Message];
+        RETURN;
+    END
+
+    IF @Opr = 'DELETE'
+    BEGIN
+        IF @TargetUserId IS NULL OR NOT EXISTS (SELECT 1 FROM dbo.[user] WHERE user_id = @TargetUserId)
+        BEGIN
+            RAISERROR('Not Found: User with ID %d does not exist.', 16, 1, @TargetUserId);
+            RETURN;
+        END
+
+        DELETE FROM dbo.[user] WHERE user_id = @TargetUserId;
+        SELECT @TargetUserId AS user_id, 'User deleted successfully' AS [Message];
+        RETURN;
+    END
+END;
 GO
 
+-- =========================================================================
+-- PROCEDURE 7: SP_address
+-- =========================================================================
+CREATE OR ALTER PROCEDURE dbo.SP_address
+    @Opr       NVARCHAR(10),
+    @JSONstr   NVARCHAR(MAX) = NULL,
+    @Condition NVARCHAR(255) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @TargetAddressId INT = TRY_CAST(@Condition AS INT);
+    DECLARE @UserId          INT;
+    DECLARE @AddressName     NVARCHAR(20);
+    DECLARE @RecipientName   NVARCHAR(100);
+    DECLARE @Block           NVARCHAR(255);
+    DECLARE @Street          NVARCHAR(255);
+    DECLARE @Area            NVARCHAR(255);
+    DECLARE @City            NVARCHAR(100);
+    DECLARE @State           NVARCHAR(100);
+    DECLARE @Pincode         NVARCHAR(10);
+    DECLARE @Country         NVARCHAR(50);
+
+    IF @JSONstr IS NOT NULL AND ISJSON(@JSONstr) > 0
+    BEGIN
+        SELECT
+            @UserId        = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.user_id') AS INT),
+            @AddressName   = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.address_name'))),
+            @RecipientName = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.recipient_name'))),
+            @Block         = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.Block'))),
+            @Street        = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.street'))),
+            @Area          = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.area'))),
+            @City          = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.city'))),
+            @State         = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.state'))),
+            @Pincode       = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.pincode'))),
+            @Country       = COALESCE(LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.country'))), 'India');
+    END
+
+    -- SELECT
+    IF @Opr = 'SELECT'
+    BEGIN
+        IF @TargetAddressId IS NOT NULL AND @TargetAddressId > 0
+        BEGIN
+            SELECT address_id, user_id, address_name, recipient_name, Block, street, area, city, [state], pincode, country
+            FROM dbo.address
+            WHERE address_id = @TargetAddressId;
+        END
+        ELSE IF @UserId IS NOT NULL AND @UserId > 0
+        BEGIN
+            SELECT address_id, user_id, address_name, recipient_name, Block, street, area, city, [state], pincode, country
+            FROM dbo.address
+            WHERE user_id = @UserId
+            ORDER BY address_id DESC;
+        END
+        ELSE
+        BEGIN
+            SELECT address_id, user_id, address_name, recipient_name, Block, street, area, city, [state], pincode, country
+            FROM dbo.address
+            ORDER BY address_id DESC;
+        END
+        RETURN;
+    END
+
+    -- ADD
+    IF @Opr = 'ADD'
+    BEGIN
+        IF @UserId IS NULL OR NOT EXISTS (SELECT 1 FROM dbo.[user] WHERE user_id = @UserId)
+        BEGIN
+            RAISERROR('Validation Error: A valid user_id is required.', 16, 1);
+            RETURN;
+        END
+        IF @RecipientName IS NULL OR LEN(@RecipientName) = 0
+        BEGIN
+            RAISERROR('Validation Error: recipient_name cannot be blank.', 16, 1);
+            RETURN;
+        END
+        IF @Block IS NULL OR LEN(@Block) = 0
+        BEGIN
+            RAISERROR('Validation Error: Block cannot be blank.', 16, 1);
+            RETURN;
+        END
+        IF @Street IS NULL OR LEN(@Street) = 0
+        BEGIN
+            RAISERROR('Validation Error: street cannot be blank.', 16, 1);
+            RETURN;
+        END
+        IF @Area IS NULL OR LEN(@Area) = 0
+        BEGIN
+            RAISERROR('Validation Error: area cannot be blank.', 16, 1);
+            RETURN;
+        END
+        IF @City IS NULL OR LEN(@City) = 0
+        BEGIN
+            RAISERROR('Validation Error: city cannot be blank.', 16, 1);
+            RETURN;
+        END
+        IF @State IS NULL OR LEN(@State) = 0
+        BEGIN
+            RAISERROR('Validation Error: state cannot be blank.', 16, 1);
+            RETURN;
+        END
+        IF @Pincode IS NULL OR LEN(@Pincode) = 0
+        BEGIN
+            RAISERROR('Validation Error: pincode cannot be blank.', 16, 1);
+            RETURN;
+        END
+
+        INSERT INTO dbo.address (user_id, address_name, recipient_name, Block, street, area, city, [state], pincode, country)
+        VALUES (@UserId, @AddressName, @RecipientName, @Block, @Street, @Area, @City, @State, @Pincode, @Country);
+
+        DECLARE @NewAddressId INT = SCOPE_IDENTITY();
+        SELECT @NewAddressId AS address_id, 'Address saved successfully' AS [Message];
+        RETURN;
+    END
+
+    -- EDIT
+    IF @Opr = 'EDIT'
+    BEGIN
+        IF @TargetAddressId IS NULL OR NOT EXISTS (SELECT 1 FROM dbo.address WHERE address_id = @TargetAddressId)
+        BEGIN
+            RAISERROR('Not Found: Address with ID %d does not exist.', 16, 1, @TargetAddressId);
+            RETURN;
+        END
+
+        UPDATE dbo.address
+        SET address_name   = ISNULL(@AddressName, address_name),
+            recipient_name = ISNULL(@RecipientName, recipient_name),
+            Block          = ISNULL(@Block, Block),
+            street         = ISNULL(@Street, street),
+            area           = ISNULL(@Area, area),
+            city           = ISNULL(@City, city),
+            [state]        = ISNULL(@State, [state]),
+            pincode        = ISNULL(@Pincode, pincode),
+            country        = ISNULL(@Country, country)
+        WHERE address_id = @TargetAddressId;
+
+        SELECT @TargetAddressId AS address_id, 'Address updated successfully' AS [Message];
+        RETURN;
+    END
+
+    -- DELETE
+    IF @Opr = 'DELETE'
+    BEGIN
+        IF @TargetAddressId IS NULL OR NOT EXISTS (SELECT 1 FROM dbo.address WHERE address_id = @TargetAddressId)
+        BEGIN
+            RAISERROR('Not Found: Address with ID %d does not exist.', 16, 1, @TargetAddressId);
+            RETURN;
+        END
+
+        DELETE FROM dbo.address WHERE address_id = @TargetAddressId;
+        SELECT @TargetAddressId AS address_id, 'Address deleted successfully' AS [Message];
+        RETURN;
+    END
+END;
+GO
+
+-- =========================================================================
+-- PROCEDURE 8: SP_cart
+-- =========================================================================
+CREATE OR ALTER PROCEDURE dbo.SP_cart
+    @Opr       NVARCHAR(10),
+    @JSONstr   NVARCHAR(MAX) = NULL,
+    @Condition NVARCHAR(255) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @TargetCartId INT = TRY_CAST(@Condition AS INT);
+    DECLARE @UserId       INT;
+    DECLARE @GuestToken   NVARCHAR(100);
+    DECLARE @ProductId    INT;
+    DECLARE @Quantity     INT = 1;
+
+    IF @JSONstr IS NOT NULL AND ISJSON(@JSONstr) > 0
+    BEGIN
+        SELECT
+            @UserId       = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.user_id') AS INT),
+            @GuestToken   = LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.guest_token'))),
+            @ProductId    = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.product_id') AS INT),
+            @Quantity     = COALESCE(TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.quantity') AS INT), 1),
+            @TargetCartId = COALESCE(TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.cart_id') AS INT), @TargetCartId);
+    END
+
+    -- Resolve Cart ID
+    DECLARE @CartId INT = @TargetCartId;
+    IF @CartId IS NULL
+    BEGIN
+        IF @UserId IS NOT NULL AND @UserId > 0
+        BEGIN
+            SELECT TOP 1 @CartId = cart_id FROM dbo.cart WHERE user_id = @UserId;
+            IF @CartId IS NULL
+            BEGIN
+                INSERT INTO dbo.cart (user_id, guest_token) VALUES (@UserId, NULL);
+                SET @CartId = SCOPE_IDENTITY();
+            END
+        END
+        ELSE IF @GuestToken IS NOT NULL AND @GuestToken <> ''
+        BEGIN
+            SELECT TOP 1 @CartId = cart_id FROM dbo.cart WHERE guest_token = @GuestToken;
+            IF @CartId IS NULL
+            BEGIN
+                INSERT INTO dbo.cart (user_id, guest_token) VALUES (NULL, @GuestToken);
+                SET @CartId = SCOPE_IDENTITY();
+            END
+        END
+    END
+
+    -- SELECT (Computes amount, discount, and final_rate from dbo.product)
+    IF @Opr = 'SELECT'
+    BEGIN
+        IF @CartId IS NULL
+        BEGIN
+            SELECT 0 AS cart_id, 0 AS total_quantity, 0.00 AS cart_subtotal, 0.00 AS cart_total;
+            RETURN;
+        END
+
+        SELECT 
+            ci.cart_item_id,
+            ci.cart_id,
+            ci.product_id,
+            p.title AS product_name,
+            p.purity,
+            p.[weight],
+            p.price AS amount,
+            ISNULL(p.discount, 0.00) AS discount,
+            CAST(p.price - (p.price * ISNULL(p.discount, 0.00) / 100.0) AS DECIMAL(18,2)) AS final_rate,
+            ci.quantity,
+            CAST(CAST(p.price - (p.price * ISNULL(p.discount, 0.00) / 100.0) AS DECIMAL(18,2)) * ci.quantity AS DECIMAL(18,2)) AS line_total,
+            ci.created_at,
+            ISNULL((
+                SELECT TOP 1 img.image_url
+                FROM dbo.product_image pi
+                INNER JOIN dbo.[image] img ON pi.image_id = img.image_id
+                WHERE pi.product_id = ci.product_id
+            ), '') AS image_url
+        FROM dbo.cart_item ci
+        INNER JOIN dbo.product p ON ci.product_id = p.product_id
+        WHERE ci.cart_id = @CartId
+        ORDER BY ci.cart_item_id DESC;
+
+        RETURN;
+    END
+
+    -- ADD
+    IF @Opr = 'ADD'
+    BEGIN
+        IF @CartId IS NULL
+        BEGIN
+            RAISERROR('Validation Error: user_id or guest_token is required to identify the cart.', 16, 1);
+            RETURN;
+        END
+
+        IF @ProductId IS NULL OR NOT EXISTS (SELECT 1 FROM dbo.product WHERE product_id = @ProductId)
+        BEGIN
+            RAISERROR('Validation Error: Valid product_id is required.', 16, 1);
+            RETURN;
+        END
+
+        IF EXISTS (SELECT 1 FROM dbo.cart_item WHERE cart_id = @CartId AND product_id = @ProductId)
+        BEGIN
+            UPDATE dbo.cart_item
+            SET quantity = quantity + @Quantity
+            WHERE cart_id = @CartId AND product_id = @ProductId;
+        END
+        ELSE
+        BEGIN
+            INSERT INTO dbo.cart_item (cart_id, product_id, quantity)
+            VALUES (@CartId, @ProductId, @Quantity);
+        END
+
+        UPDATE dbo.cart SET updated_at = SYSUTCDATETIME() WHERE cart_id = @CartId;
+
+        SELECT @CartId AS cart_id, @ProductId AS product_id, 'Product added to cart successfully' AS [Message];
+        RETURN;
+    END
+
+    -- EDIT (Set quantity directly)
+    IF @Opr = 'EDIT'
+    BEGIN
+        IF @CartId IS NULL OR @ProductId IS NULL
+        BEGIN
+            RAISERROR('Validation Error: cart_id and product_id are required.', 16, 1);
+            RETURN;
+        END
+
+        IF @Quantity <= 0
+        BEGIN
+            DELETE FROM dbo.cart_item WHERE cart_id = @CartId AND product_id = @ProductId;
+            SELECT @CartId AS cart_id, @ProductId AS product_id, 'Item removed from cart' AS [Message];
+        END
+        ELSE
+        BEGIN
+            UPDATE dbo.cart_item
+            SET quantity = @Quantity
+            WHERE cart_id = @CartId AND product_id = @ProductId;
+
+            UPDATE dbo.cart SET updated_at = SYSUTCDATETIME() WHERE cart_id = @CartId;
+            SELECT @CartId AS cart_id, @ProductId AS product_id, @Quantity AS quantity, 'Quantity updated successfully' AS [Message];
+        END
+        RETURN;
+    END
+
+    -- DELETE (Single item or whole cart)
+    IF @Opr = 'DELETE'
+    BEGIN
+        IF @CartId IS NULL
+        BEGIN
+            RAISERROR('Validation Error: cart_id is required.', 16, 1);
+            RETURN;
+        END
+
+        IF @ProductId IS NOT NULL AND @ProductId > 0
+        BEGIN
+            DELETE FROM dbo.cart_item WHERE cart_id = @CartId AND product_id = @ProductId;
+            SELECT @CartId AS cart_id, @ProductId AS product_id, 'Item removed from cart' AS [Message];
+        END
+        ELSE
+        BEGIN
+            DELETE FROM dbo.cart_item WHERE cart_id = @CartId;
+            SELECT @CartId AS cart_id, 'Cart cleared completely' AS [Message];
+        END
+
+        UPDATE dbo.cart SET updated_at = SYSUTCDATETIME() WHERE cart_id = @CartId;
+        RETURN;
+    END
+
+    -- MERGE (Guest cart to user cart on login)
+    IF @Opr = 'MERGE'
+    BEGIN
+        IF @UserId IS NOT NULL AND @GuestToken IS NOT NULL AND @GuestToken <> ''
+        BEGIN
+            DECLARE @GuestCartId INT;
+            SELECT TOP 1 @GuestCartId = cart_id FROM dbo.cart WHERE guest_token = @GuestToken;
+
+            IF @GuestCartId IS NOT NULL
+            BEGIN
+                MERGE dbo.cart_item AS target
+                USING (SELECT product_id, quantity FROM dbo.cart_item WHERE cart_id = @GuestCartId) AS source
+                ON (target.cart_id = @CartId AND target.product_id = source.product_id)
+                WHEN MATCHED THEN
+                    UPDATE SET target.quantity = target.quantity + source.quantity
+                WHEN NOT MATCHED THEN
+                    INSERT (cart_id, product_id, quantity)
+                    VALUES (@CartId, source.product_id, source.quantity);
+
+                DELETE FROM dbo.cart WHERE cart_id = @GuestCartId;
+            END
+
+            SELECT @CartId AS cart_id, 'Guest cart merged successfully' AS [Message];
+        END
+        RETURN;
+    END
+END;
+GO
+
+-- =========================================================================
+-- PROCEDURE 9: SP_orders
+-- =========================================================================
+CREATE OR ALTER PROCEDURE dbo.SP_orders
+    @Opr       NVARCHAR(10),
+    @JSONstr   NVARCHAR(MAX) = NULL,
+    @Condition NVARCHAR(255) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @TargetOrderId  INT = TRY_CAST(@Condition AS INT);
+    DECLARE @UserId         INT;
+    DECLARE @AddressId      INT;
+    DECLARE @PaymentStatus  NVARCHAR(20);
+    DECLARE @OrderNumber    NVARCHAR(50);
+    DECLARE @CartId         INT;
+
+    IF @JSONstr IS NOT NULL AND ISJSON(@JSONstr) > 0
+    BEGIN
+        SELECT
+            @UserId        = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.user_id') AS INT),
+            @AddressId     = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.address_id') AS INT),
+            @PaymentStatus = COALESCE(LTRIM(RTRIM(JSON_VALUE(@JSONstr, '$.table_values.payment_status'))), 'PENDING'),
+            @CartId        = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.cart_id') AS INT);
+    END
+
+    -- SELECT
+    IF @Opr = 'SELECT'
+    BEGIN
+        IF @TargetOrderId IS NOT NULL AND @TargetOrderId > 0
+        BEGIN
+            SELECT 
+                o.order_id, o.order_number, o.user_id, u.full_name AS customer_name, u.email,
+                o.address_id, a.recipient_name, a.Block, a.street, a.area, a.city, a.[state], a.pincode, a.country,
+                o.total_amount, o.discount_amount, o.final_payable, o.payment_status, o.created_at,
+                (
+                    SELECT 
+                        oi.order_item_id, oi.product_id, p.title AS product_name,
+                        oi.unit_price, oi.discount_percent, oi.quantity, oi.subtotal
+                    FROM dbo.order_item oi
+                    INNER JOIN dbo.product p ON oi.product_id = p.product_id
+                    WHERE oi.order_id = o.order_id
+                    FOR JSON PATH
+                ) AS items_json
+            FROM dbo.orders o
+            INNER JOIN dbo.[user] u ON o.user_id = u.user_id
+            LEFT JOIN dbo.address a ON o.address_id = a.address_id
+            WHERE o.order_id = @TargetOrderId;
+        END
+        ELSE IF @UserId IS NOT NULL AND @UserId > 0
+        BEGIN
+            SELECT 
+                o.order_id, o.order_number, o.user_id,
+                o.total_amount, o.discount_amount, o.final_payable, o.payment_status, o.created_at
+            FROM dbo.orders o
+            WHERE o.user_id = @UserId
+            ORDER BY o.order_id DESC;
+        END
+        ELSE
+        BEGIN
+            SELECT 
+                o.order_id, o.order_number, o.user_id, u.full_name AS customer_name,
+                o.total_amount, o.discount_amount, o.final_payable, o.payment_status, o.created_at
+            FROM dbo.orders o
+            INNER JOIN dbo.[user] u ON o.user_id = u.user_id
+            ORDER BY o.order_id DESC;
+        END
+        RETURN;
+    END
+
+    -- ADD (Convert Cart to Order)
+    IF @Opr = 'ADD'
+    BEGIN
+        IF @UserId IS NULL OR NOT EXISTS (SELECT 1 FROM dbo.[user] WHERE user_id = @UserId)
+        BEGIN
+            RAISERROR('Validation Error: A valid user_id is required.', 16, 1);
+            RETURN;
+        END
+
+        IF @AddressId IS NOT NULL AND NOT EXISTS (SELECT 1 FROM dbo.address WHERE address_id = @AddressId)
+        BEGIN
+            RAISERROR('Validation Error: Provided address_id does not exist.', 16, 1);
+            RETURN;
+        END
+
+        -- If cart_id wasn't explicitly supplied, find user's cart
+        IF @CartId IS NULL
+            SELECT TOP 1 @CartId = cart_id FROM dbo.cart WHERE user_id = @UserId;
+
+        IF @CartId IS NULL OR NOT EXISTS (SELECT 1 FROM dbo.cart_item WHERE cart_id = @CartId)
+        BEGIN
+            RAISERROR('Validation Error: Cannot place an order with an empty cart.', 16, 1);
+            RETURN;
+        END
+
+        -- Generate Order Number (e.g., SH-20260903-XXXX)
+        SET @OrderNumber = 'SH-' + CONVERT(VARCHAR(8), GETDATE(), 112) + '-' + RIGHT(CAST(NEWID() AS VARCHAR(36)), 4);
+
+        DECLARE @TotalAmount     DECIMAL(18,2) = 0.00;
+        DECLARE @DiscountAmount  DECIMAL(18,2) = 0.00;
+        DECLARE @FinalPayable    DECIMAL(18,2) = 0.00;
+
+        SELECT 
+            @TotalAmount    = SUM(p.price * ci.quantity),
+            @FinalPayable   = SUM(CAST(p.price - (p.price * ISNULL(p.discount, 0.00) / 100.0) AS DECIMAL(18,2)) * ci.quantity)
+        FROM dbo.cart_item ci
+        INNER JOIN dbo.product p ON ci.product_id = p.product_id
+        WHERE ci.cart_id = @CartId;
+
+        SET @DiscountAmount = @TotalAmount - @FinalPayable;
+
+        BEGIN TRANSACTION;
+        BEGIN TRY
+            -- 1. Insert into orders
+            INSERT INTO dbo.orders (order_number, user_id, address_id, total_amount, discount_amount, final_payable, payment_status)
+            VALUES (@OrderNumber, @UserId, @AddressId, @TotalAmount, @DiscountAmount, @FinalPayable, @PaymentStatus);
+
+            DECLARE @NewOrderId INT = SCOPE_IDENTITY();
+
+            -- 2. Insert into order_item (Snapshot live price and discount)
+            INSERT INTO dbo.order_item (order_id, product_id, unit_price, discount_percent, quantity, subtotal)
+            SELECT 
+                @NewOrderId,
+                ci.product_id,
+                p.price,
+                ISNULL(p.discount, 0.00),
+                ci.quantity,
+                CAST(CAST(p.price - (p.price * ISNULL(p.discount, 0.00) / 100.0) AS DECIMAL(18,2)) * ci.quantity AS DECIMAL(18,2))
+            FROM dbo.cart_item ci
+            INNER JOIN dbo.product p ON ci.product_id = p.product_id
+            WHERE ci.cart_id = @CartId;
+
+            -- 3. Decrement Product Stock
+            UPDATE p
+            SET p.quantity = p.quantity - ci.quantity
+            FROM dbo.product p
+            INNER JOIN dbo.cart_item ci ON p.product_id = ci.product_id
+            WHERE ci.cart_id = @CartId;
+
+            -- 4. Clear Cart
+            DELETE FROM dbo.cart_item WHERE cart_id = @CartId;
+
+            COMMIT TRANSACTION;
+
+            SELECT @NewOrderId AS order_id, @OrderNumber AS order_number, @FinalPayable AS final_payable, 'Order placed successfully' AS [Message];
+            RETURN;
+        END TRY
+        BEGIN CATCH
+            IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+            THROW;
+        END CATCH
+    END
+
+    -- EDIT (Update Payment Status)
+    IF @Opr = 'EDIT'
+    BEGIN
+        IF @TargetOrderId IS NULL OR NOT EXISTS (SELECT 1 FROM dbo.orders WHERE order_id = @TargetOrderId)
+        BEGIN
+            RAISERROR('Not Found: Order with ID %d does not exist.', 16, 1, @TargetOrderId);
+            RETURN;
+        END
+
+        UPDATE dbo.orders
+        SET payment_status = ISNULL(@PaymentStatus, payment_status)
+        WHERE order_id = @TargetOrderId;
+
+        SELECT @TargetOrderId AS order_id, 'Order updated successfully' AS [Message];
+        RETURN;
+    END
+END;
+GO
+
+-- =========================================================================
+-- PROCEDURE 10: SP_wishlist
+-- =========================================================================
+CREATE OR ALTER PROCEDURE dbo.SP_wishlist
+    @Opr       NVARCHAR(10),
+    @JSONstr   NVARCHAR(MAX) = NULL,
+    @Condition NVARCHAR(255) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @UserId    INT;
+    DECLARE @ProductId INT;
+
+    IF @JSONstr IS NOT NULL AND ISJSON(@JSONstr) > 0
+    BEGIN
+        SELECT
+            @UserId    = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.user_id') AS INT),
+            @ProductId = TRY_CAST(JSON_VALUE(@JSONstr, '$.table_values.product_id') AS INT);
+    END
+
+    -- SELECT
+    IF @Opr = 'SELECT'
+    BEGIN
+        IF @UserId IS NULL OR @UserId <= 0
+            SET @UserId = TRY_CAST(@Condition AS INT);
+
+        SELECT 
+            w.wishlist_id,
+            w.user_id,
+            w.product_id,
+            p.title AS product_name,
+            p.purity,
+            p.[weight],
+            p.price,
+            p.discount,
+            CAST(p.price - (p.price * ISNULL(p.discount, 0.00) / 100.0) AS DECIMAL(18,2)) AS final_price,
+            p.quantity AS stock_available,
+            w.created_at,
+            ISNULL((
+                SELECT TOP 1 img.image_url
+                FROM dbo.product_image pi
+                INNER JOIN dbo.[image] img ON pi.image_id = img.image_id
+                WHERE pi.product_id = w.product_id
+            ), '') AS image_url
+        FROM dbo.wishlist w
+        INNER JOIN dbo.product p ON w.product_id = p.product_id
+        WHERE (@UserId IS NULL OR w.user_id = @UserId)
+        ORDER BY w.wishlist_id DESC;
+
+        RETURN;
+    END
+
+    -- ADD
+    IF @Opr = 'ADD'
+    BEGIN
+        IF @UserId IS NULL OR NOT EXISTS (SELECT 1 FROM dbo.[user] WHERE user_id = @UserId)
+        BEGIN
+            RAISERROR('Validation Error: Valid user_id is required.', 16, 1);
+            RETURN;
+        END
+
+        IF @ProductId IS NULL OR NOT EXISTS (SELECT 1 FROM dbo.product WHERE product_id = @ProductId)
+        BEGIN
+            RAISERROR('Validation Error: Valid product_id is required.', 16, 1);
+            RETURN;
+        END
+
+        IF NOT EXISTS (SELECT 1 FROM dbo.wishlist WHERE user_id = @UserId AND product_id = @ProductId)
+        BEGIN
+            INSERT INTO dbo.wishlist (user_id, product_id)
+            VALUES (@UserId, @ProductId);
+        END
+
+        SELECT @UserId AS user_id, @ProductId AS product_id, 'Added to wishlist' AS [Message];
+        RETURN;
+    END
+
+    -- DELETE
+    IF @Opr = 'DELETE'
+    BEGIN
+        IF @UserId IS NOT NULL AND @ProductId IS NOT NULL
+        BEGIN
+            DELETE FROM dbo.wishlist WHERE user_id = @UserId AND product_id = @ProductId;
+            SELECT @ProductId AS product_id, 'Removed from wishlist' AS [Message];
+        END
+        ELSE
+        BEGIN
+            DECLARE @TargetWishlistId INT = TRY_CAST(@Condition AS INT);
+            DELETE FROM dbo.wishlist WHERE wishlist_id = @TargetWishlistId;
+            SELECT @TargetWishlistId AS wishlist_id, 'Removed from wishlist' AS [Message];
+        END
+        RETURN;
+    END
+END;
+GO
+
+-- =========================================================================
+-- PROCEDURE 11: SP_GETDATA
+-- =========================================================================
 CREATE OR ALTER PROCEDURE dbo.SP_GETDATA
     @proc_name   NVARCHAR(50),
     @Opr         NVARCHAR(10),
@@ -686,7 +1485,8 @@ BEGIN
         RETURN;
     END
 
-    IF @proc_name NOT IN ('product', 'category', 'image', 'make_master', 'product_image')
+    -- Whitelist includes catalog entities and new e-commerce entities
+    IF @proc_name NOT IN ('product', 'category', 'image', 'make_master', 'product_image', 'user', 'address', 'cart', 'orders', 'wishlist')
     BEGIN
         SET @Response = 'SECURITY ERROR: Unauthorized or unsupported proc_name "' + @proc_name + '".';
         SELECT @Response AS [Response_Status];
@@ -700,10 +1500,10 @@ BEGIN
         RETURN;
     END
 
-    -- Allow RESTOCK alongside standard CRUD operations
-    IF @Opr NOT IN ('ADD', 'EDIT', 'DELETE', 'SELECT', 'RESTOCK')
+    -- Allow standard CRUD + RESTOCK and MERGE operations
+    IF @Opr NOT IN ('ADD', 'EDIT', 'DELETE', 'SELECT', 'RESTOCK', 'MERGE')
     BEGIN
-        SET @Response = 'VALIDATION ERROR: Invalid operation "' + @Opr + '". Allowed: ADD, EDIT, DELETE, SELECT, RESTOCK.';
+        SET @Response = 'VALIDATION ERROR: Invalid operation "' + @Opr + '". Allowed: ADD, EDIT, DELETE, SELECT, RESTOCK, MERGE.';
         SELECT @Response AS [Response_Status];
         RETURN;
     END
@@ -729,6 +1529,16 @@ BEGIN
             EXEC dbo.SP_make_master @Opr = @Opr, @JSONstr = @JSONstr, @Condition = @Condition;
         ELSE IF @proc_name = 'product_image'
             EXEC dbo.SP_product_image @Opr = @Opr, @JSONstr = @JSONstr, @Condition = @Condition;
+        ELSE IF @proc_name = 'user'
+            EXEC dbo.SP_user @Opr = @Opr, @JSONstr = @JSONstr, @Condition = @Condition;
+        ELSE IF @proc_name = 'address'
+            EXEC dbo.SP_address @Opr = @Opr, @JSONstr = @JSONstr, @Condition = @Condition;
+        ELSE IF @proc_name = 'cart'
+            EXEC dbo.SP_cart @Opr = @Opr, @JSONstr = @JSONstr, @Condition = @Condition;
+        ELSE IF @proc_name = 'orders'
+            EXEC dbo.SP_orders @Opr = @Opr, @JSONstr = @JSONstr, @Condition = @Condition;
+        ELSE IF @proc_name = 'wishlist'
+            EXEC dbo.SP_wishlist @Opr = @Opr, @JSONstr = @JSONstr, @Condition = @Condition;
 
         SET @Response = 'OK';
         SELECT @Response AS [Response_Status];
@@ -739,4 +1549,3 @@ BEGIN
     END CATCH
 END;
 GO
-
