@@ -202,8 +202,8 @@ app.post('/api/data', async (req, res) => {
                         if (item.images_json) {
                             try {
                                 const parsed = JSON.parse(item.images_json);
-                                item.images = Array.isArray(parsed) 
-                                    ? parsed.map(img => typeof img === 'string' ? img : (img.image_url || img.url || '')) 
+                                item.images = Array.isArray(parsed)
+                                    ? parsed.map(img => typeof img === 'string' ? img : (img.image_url || img.url || ''))
                                     : [];
                             } catch (e) {
                                 item.images = [];
@@ -266,8 +266,8 @@ app.post('/api/data', async (req, res) => {
                 if (item.images_json) {
                     try {
                         const parsed = JSON.parse(item.images_json);
-                        item.images = Array.isArray(parsed) 
-                            ? parsed.map(img => typeof img === 'string' ? img : (img.image_url || img.url || '')) 
+                        item.images = Array.isArray(parsed)
+                            ? parsed.map(img => typeof img === 'string' ? img : (img.image_url || img.url || ''))
                             : [];
                     } catch (e) {
                         item.images = [];

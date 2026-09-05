@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SilverHouse Studio Admin</title>
+
+    <!-- SheetJS & Mammoth for file imports -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+    <!-- Google Fonts & Phosphor Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --surface-card: #f1f5f9;
+            --surface-hover: #e2e8f0;
+            --border: #e2e8f0;
+            --border-focus: #6366f1;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-glow: rgba(79, 70, 229, 0.2);
+            --accent: #0284c7;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --sidebar-width: 260px;
+            --radius: 12px;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --input-bg: #ffffff;
+            --input-text: #0f172a;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            --modal-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            --topbar-border: #e2e8f0;
+            --bg-gradient: radial-gradient(circle at top right, rgba(99, 102, 241, 0.08), transparent 40%);
+            --table-header-bg: #f8fafc;
+            --table-hover-bg: #f1f5f9;
+            --nav-hover-bg: #f1f5f9;
+            --modal-close-hover: #0f172a;
+        }
+
+        [data-theme="dark"] {
+            --bg: #0b0f19;
+            --surface: #111827;
+            --surface-card: #1f2937;
+            --surface-hover: #374151;
+            --border: #374151;
+            --border-focus: #6366f1;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-glow: rgba(99, 102, 241, 0.25);
+            --accent: #38bdf8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --input-bg: #1f2937;
+            --input-text: #ffffff;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --modal-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            --topbar-border: rgba(255, 255, 255, 0.05);
+            --bg-gradient: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent 40%);
+            --table-header-bg: rgba(255, 255, 255, 0.02);
+            --table-hover-bg: rgba(255, 255, 255, 0.02);
+            --nav-hover-bg: rgba(255, 255, 255, 0.04);
+            --modal-close-hover: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* =========================================
+       SIDEBAR
+    ========================================= */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+            gap: 32px;
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 8px;
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #fff;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .brand-title {
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .brand-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .btn-theme-toggle {
+            margin-left: auto;
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            transition: var(--transition);
+        }
+
+        .btn-theme-toggle:hover {
+            background: var(--surface-hover);
+            transform: scale(1.05);
+        }
+
+        .nav-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            padding: 0 8px 8px;
+            font-weight: 600;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            list-style: none;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .nav-item i {
+            font-size: 18px;
+        }
+
+        .nav-item:hover {
+            background: var(--nav-hover-bg);
+            color: var(--text-main);
+            transform: translateX(3px);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 14px var(--primary-glow);
+        }
+
+        /* =========================================
+       MAIN CONTENT AREA
+    ========================================= */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+            background: var(--bg-gradient);
+            background-color: var(--bg);
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--topbar-border);
+        }
+
+        .title-box h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .title-box p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .action-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--surface-card);
+            color: var(--text-main);
+            border-color: var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface-hover);
+        }
+
+        .btn-action-edit {
+            padding: 6px 12px;
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12.5px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .btn-action-edit:hover {
+            background: rgba(56, 189, 248, 0.2);
+        }
+
+        .btn-action-del {
+            padding: 6px 12px;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12.5px;
+            font-weight: 600;
+            transition: var(--transition);
+            margin-left: 6px;
+        }
+
+        .btn-action-del:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .content-area {
+            padding: 32px;
+            flex: 1;
+        }
+
+        .table-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow-x: auto;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: var(--table-header-bg);
+            padding: 14px 20px;
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 16px 20px;
+            font-size: 13.5px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-main);
+            white-space: nowrap;
+        }
+
+        tr:hover td {
+            background: var(--table-hover-bg);
+        }
+
+        .img-thumb {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1px solid var(--border);
+            background: var(--surface-card);
+        }
+
+        /* =========================================
+       MODALS & CUSTOM FORMS
+    ========================================= */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(6px);
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 640px;
+            max-height: 88vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--modal-shadow);
+            transform: scale(0.95);
+            transition: transform 0.25s ease;
+        }
+
+        .modal-overlay.show .modal-card {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-header h3 {
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .modal-close-btn:hover {
+            color: var(--modal-close-hover);
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        .form-group label {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: var(--input-text);
+            font-size: 13.5px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .form-group select option {
+            background: var(--surface);
+            color: var(--text-main);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-success {
+            background: #064e3b;
+            color: #a7f3d0;
+            border: 1px solid #059669;
+        }
+
+        .toast-error {
+            background: #450a0a;
+            color: #fecaca;
+            border: 1px solid #dc2626;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* =========================================
+           ROW HIGHLIGHTING FOR CRUD OPERATIONS
+        ========================================= */
+        tr.row-highlight-edit {
+            animation: rowPulseEdit 3s ease-in-out infinite alternate;
+            border-left: 5px solid #6366f1 !important;
+            position: relative;
+        }
+
+        tr.row-highlight-add {
+            animation: rowPulseAdd 3s ease-in-out infinite alternate;
+            border-left: 5px solid #10b981 !important;
+            position: relative;
+        }
+
+        tr.row-highlight-restock {
+            animation: rowPulseRestock 3s ease-in-out infinite alternate;
+            border-left: 5px solid #0284c7 !important;
+            position: relative;
+        }
+
+        tr.row-highlight-delete {
+            animation: rowPulseDelete 0.5s ease-out forwards !important;
+            border-left: 5px solid #ef4444 !important;
+        }
+
+        @keyframes rowPulseEdit {
+            0% {
+                background-color: rgba(99, 102, 241, 0.25);
+                box-shadow: inset 0 0 12px rgba(99, 102, 241, 0.3);
+            }
+
+            100% {
+                background-color: rgba(99, 102, 241, 0.08);
+                box-shadow: inset 0 0 4px rgba(99, 102, 241, 0.1);
+            }
+        }
+
+        @keyframes rowPulseAdd {
+            0% {
+                background-color: rgba(16, 185, 129, 0.25);
+                box-shadow: inset 0 0 12px rgba(16, 185, 129, 0.3);
+            }
+
+            100% {
+                background-color: rgba(16, 185, 129, 0.08);
+                box-shadow: inset 0 0 4px rgba(16, 185, 129, 0.1);
+            }
+        }
+
+        @keyframes rowPulseRestock {
+            0% {
+                background-color: rgba(2, 132, 199, 0.25);
+                box-shadow: inset 0 0 12px rgba(2, 132, 199, 0.3);
+            }
+
+            100% {
+                background-color: rgba(2, 132, 199, 0.08);
+                box-shadow: inset 0 0 4px rgba(2, 132, 199, 0.1);
+            }
+        }
+
+        @keyframes rowPulseDelete {
+            0% {
+                background-color: rgba(239, 68, 68, 0.4);
+                opacity: 1;
+            }
+
+            100% {
+                background-color: rgba(239, 68, 68, 0.1);
+                opacity: 0.2;
+                transform: scaleY(0.8);
+            }
+        }
+
+        .action-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-edit {
+            background: rgba(99, 102, 241, 0.15);
+            color: #6366f1;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .badge-add {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-restock {
+            background: rgba(2, 132, 199, 0.15);
+            color: #0284c7;
+            border: 1px solid rgba(2, 132, 199, 0.3);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- =========================================
+       SIDEBAR NAVIGATION
+  ========================================= -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-logo">
+                <i class="ph-bold ph-gem"></i>
+            </div>
+            <div>
+                <div class="brand-title">SilverHouse</div>
+                <div class="brand-subtitle">Studio Studio</div>
+            </div>
+            <button class="btn-theme-toggle" onclick="toggleTheme()" title="Toggle Light / Dark Mode">
+                <i class="ph-bold ph-moon" id="sidebarThemeIcon"></i>
+            </button>
+        </div>
+
+        <div>
+            <div class="nav-label">Database Schemas</div>
+            <ul class="nav-menu">
+                <li class="nav-item active" onclick="navigate('product')">
+                    <i class="ph-bold ph-shopping-bag"></i>
+                    <span>Products</span>
+                </li>
+                <li class="nav-item" onclick="navigate('category')">
+                    <i class="ph-bold ph-squares-four"></i>
+                    <span>Categories</span>
+                </li>
+                <li class="nav-item" onclick="navigate('image')">
+                    <i class="ph-bold ph-image"></i>
+                    <span>Images</span>
+                </li>
+                <li class="nav-item" onclick="navigate('make_master')">
+                    <i class="ph-bold ph-wrench"></i>
+                    <span>Make Master</span>
+                </li>
+                <li class="nav-item" onclick="navigate('product_image')">
+                    <i class="ph-bold ph-link"></i>
+                    <span>Product Images</span>
+                </li>
+            </ul>
+        </div>
+    </aside>
+
+    <!-- =========================================
+       MAIN DASHBOARD
+  ========================================= -->
+    <main class="main-wrapper">
+        <header class="top-bar">
+            <div class="title-box">
+                <h1 id="pageTitle">PRODUCT</h1>
+                <p id="pageDescription">Manage, search, and edit database records</p>
+            </div>
+
+            <div class="action-controls">
+                <select id="importModeSelect"
+                    style="background: var(--surface-card); color: #fff; border: 1px solid var(--border); padding: 9px 12px; border-radius: 8px; font-size: 13px; outline: none;">
+                    <option value="RESTOCK">⚡ Inward Stock Mode</option>
+                    <option value="EDIT">✏️ Overwrite Mode</option>
+                </select>
+
+                <input type="file" id="fileUploadInput" accept=".csv, .xlsx, .xls, .docx" style="display:none;"
+                    onchange="handleFileUpload(event)" />
+                <button class="btn btn-secondary" onclick="triggerFileImport()">
+                    <i class="ph-bold ph-upload-simple"></i>
+                    <span>Import File</span>
+                </button>
+                <button class="btn btn-primary" onclick="openAddModal()">
+                    <i class="ph-bold ph-plus"></i>
+                    <span>Add Product</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="table-card">
+                <table>
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification element -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        let activeEntity = 'product';
+        let currentRows = [];
+        let editId = null;
+        let highlightMap = {};
+
+        let categoriesList = [];
+        let makeMasterList = [];
+        let categoriesMap = {};
+        let categoryNameToIdMap = {};
+        let makeMasterMap = {};
+
+        const PK_MAP = {
+            product: 'product_id',
+            category: 'category_id',
+            image: 'image_id',
+            make_master: 'm_id',
+            product_image: 'product_id'
+        };
+
+        async function loadDropdownOptions() {
+            try {
+                const [catRes, makeRes] = await Promise.all([
+                    fetch('/api/data', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ proc_name: 'category', opr: 'SELECT' })
+                    }).then(r => r.json()),
+                    fetch('/api/data', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ proc_name: 'make_master', opr: 'SELECT' })
+                    }).then(r => r.json())
+                ]);
+
+                categoriesList = catRes.data || [];
+                makeMasterList = makeRes.data || [];
+
+                categoriesMap = {};
+                categoryNameToIdMap = {};
+                categoriesList.forEach(c => {
+                    if (c.category_id !== undefined && c.name) {
+                        categoriesMap[c.category_id] = c.name;
+                        categoryNameToIdMap[String(c.name).trim().toLowerCase()] = c.category_id;
+                        categoryNameToIdMap[String(c.name).trim()] = c.category_id;
+                    }
+                });
+
+                makeMasterMap = {};
+                makeMasterList.forEach(m => {
+                    if (m.m_id !== undefined && m.type) {
+                        makeMasterMap[m.m_id] = m.type;
+                    }
+                });
+
+                populateSelectOptions('product_category_select', categoriesList, 'category_id', 'name', 'Select Category');
+                populateSelectOptions('product_make_select', makeMasterList, 'm_id', 'type', 'Select Make (Optional)');
+            } catch (err) {
+                console.error('Failed to load dropdown options:', err);
+            }
+        }
+
+        function populateSelectOptions(selectId, items, valueKey, textKey, defaultText) {
+            const selectEl = document.getElementById(selectId);
+            if (!selectEl) return;
+            const currentVal = selectEl.value;
+            let html = `<option value="">${defaultText}</option>`;
+            items.forEach(item => {
+                html += `<option value="${item[valueKey]}">${item[textKey]}</option>`;
+            });
+            selectEl.innerHTML = html;
+            if (currentVal) {
+                selectEl.value = currentVal;
+            }
+        }
+
+        function navigate(procName) {
+            activeEntity = procName;
+            editId = null;
+            highlightMap = {};
+
+            // Update active nav button
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            // Update titles
+            const cleanName = procName.replace('_', ' ').toUpperCase();
+            document.getElementById('pageTitle').innerText = cleanName;
+            const btnAdd = document.getElementById('btnAddText');
+            if (btnAdd) btnAdd.innerText = `+ Add ${cleanName.slice(0, -1)}`;
+
+            loadData();
+        }
+
+        async function loadData() {
+            try {
+                await loadDropdownOptions();
+                const res = await fetch('/api/data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ proc_name: activeEntity, opr: 'SELECT' })
+                });
+                const result = await res.json();
+                currentRows = result.data || [];
+                renderTable(currentRows);
+            } catch (err) {
+                showToast('Failed to load table: ' + err.message, true);
+            }
+        }
+
+        function renderTable(rows) {
+            const thead = document.getElementById('tableHead');
+            const tbody = document.getElementById('tableBody');
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+
+            if (!rows || rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding: 40px; color: var(--text-muted);">
+          No records present in ${activeEntity}. Click "+ Add" to create one.
+        </td></tr>`;
+                return;
+            }
+
+            const pkField = PK_MAP[activeEntity];
+            const headers = Object.keys(rows[0]);
+            let headRow = '<tr>';
+            headers.forEach(h => {
+                let colTitle = h.replace('_', ' ');
+                if (activeEntity === 'product') {
+                    if (h === 'category_id') colTitle = 'Category Name';
+                    if (h === 'm_id') colTitle = 'Make Master';
+                    if (h === 'title') colTitle = 'Product Name';
+                }
+                headRow += `<th>${colTitle}</th>`;
+            });
+            headRow += '<th style="text-align:right">Actions</th></tr>';
+            thead.innerHTML = headRow;
+
+            let firstHighlightedRow = null;
+
+            rows.forEach(row => {
+                const idVal = row[pkField];
+                const actionType = highlightMap[idVal] || (idVal !== undefined && highlightMap[String(idVal)]);
+
+                let rowClass = '';
+                let badgeHtml = '';
+                if (actionType === 'edit') {
+                    rowClass = 'row-highlight-edit';
+                    badgeHtml = `<span class="action-badge badge-edit"><i class="ph-bold ph-pencil-simple"></i> Edited</span>`;
+                } else if (actionType === 'add') {
+                    rowClass = 'row-highlight-add';
+                    badgeHtml = `<span class="action-badge badge-add"><i class="ph-bold ph-sparkle"></i> Added</span>`;
+                } else if (actionType === 'restock') {
+                    rowClass = 'row-highlight-restock';
+                    badgeHtml = `<span class="action-badge badge-restock"><i class="ph-bold ph-lightning"></i> Restocked</span>`;
+                }
+
+                let rowHtml = `<tr data-id="${idVal}" class="${rowClass}">`;
+                headers.forEach((h, idx) => {
+                    let val = row[h] !== null && row[h] !== undefined ? row[h] : '-';
+                    const showBadge = (idx === 0 && badgeHtml);
+
+                    if (h.toLowerCase().includes('url') && val !== '-') {
+                        rowHtml += `<td><img src="${val}" class="img-thumb" onerror="this.src='https://via.placeholder.com/44x44/111827/9ca3af?text=N/A'"/>${showBadge ? badgeHtml : ''}</td>`;
+                    } else if (activeEntity === 'product' && h === 'category_id' && val !== '-') {
+                        const catName = categoriesMap[val] || val;
+                        rowHtml += `<td>${catName}${showBadge ? badgeHtml : ''}</td>`;
+                    } else if (activeEntity === 'product' && h === 'm_id' && val !== '-') {
+                        const makeName = makeMasterMap[val] || val;
+                        rowHtml += `<td>${makeName}${showBadge ? badgeHtml : ''}</td>`;
+                    } else {
+                        rowHtml += `<td>${val}${showBadge ? badgeHtml : ''}</td>`;
+                    }
+                });
+
+                const rowId = row[PK_MAP[activeEntity]];
+                rowHtml += `<td style="text-align:right">
+          ${activeEntity !== 'product_image' ? `<button class="btn-action-edit" onclick="openEditModal(${rowId})">Edit</button>` : ''}
+          <button class="btn-action-del" onclick="deleteRecord(${rowId}, ${row.image_id || null})">Delete</button>
+        </td></tr>`;
+
+                const trElem = document.createElement('tbody');
+                trElem.innerHTML = rowHtml;
+                const trNode = trElem.firstElementChild;
+                tbody.appendChild(trNode);
+
+                if (rowClass && !firstHighlightedRow) {
+                    firstHighlightedRow = trNode;
+                }
+            });
+
+            if (firstHighlightedRow) {
+                setTimeout(() => {
+                    firstHighlightedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 150);
+            }
+        }
+
+        const FORM_PAGES = {
+            product: '/product-form.html',
+            category: '/category-form.html',
+            image: '/image-form.html',
+            make_master: '/make-master-form.html',
+            product_image: '/product-image-form.html'
+        };
+
+        // Navigation Handlers for Separate Form Pages
+        function openAddModal() {
+            const page = FORM_PAGES[activeEntity] || '/product-form.html';
+            window.location.href = page;
+        }
+
+        function openEditModal(id) {
+            const page = FORM_PAGES[activeEntity] || '/product-form.html';
+            window.location.href = `${page}?id=${id}`;
+        }
+
+        // Initialize active entity from URL parameter if present
+        function initActiveEntity() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const entityParam = urlParams.get('entity');
+            if (entityParam && PK_MAP[entityParam]) {
+                activeEntity = entityParam;
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                    if (item.getAttribute('onclick') && item.getAttribute('onclick').includes(`'${entityParam}'`)) {
+                        item.classList.add('active');
+                    }
+                });
+                const cleanName = activeEntity.replace('_', ' ').toUpperCase();
+                document.getElementById('pageTitle').innerText = cleanName;
+                const btnAdd = document.getElementById('btnAddText');
+                if (btnAdd) btnAdd.innerText = `+ Add ${cleanName.slice(0, -1)}`;
+            }
+
+            const highlightId = urlParams.get('highlightId') || urlParams.get('highlight');
+            const actionParam = (urlParams.get('action') || 'edit').toLowerCase();
+            if (highlightId) {
+                highlightMap[highlightId] = actionParam;
+                // Clean URL query parameter without page reload
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.delete('highlightId');
+                newUrl.searchParams.delete('highlight');
+                newUrl.searchParams.delete('action');
+                window.history.replaceState({}, '', newUrl);
+            }
+        }
+
+        // Form Submit Handler
+        async function submitForm(e, entity) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const table_values = {};
+
+            formData.forEach((value, key) => {
+                if (value.trim() !== '') {
+                    table_values[key] = !isNaN(value) && value !== '' ? Number(value) : value;
+                }
+            });
+
+            const payload = {
+                proc_name: entity,
+                opr: editId ? 'EDIT' : 'ADD',
+                table_values: table_values,
+                condition: editId ? String(editId) : null
+            };
+
+            try {
+                const res = await fetch('/api/data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await res.json();
+                if (!result.success) throw new Error(result.status || result.error);
+
+                showToast(`${entity.replace('_', ' ')} saved successfully!`);
+                closeModal();
+                if (entity === 'category' || entity === 'make_master') {
+                    await loadDropdownOptions();
+                }
+                loadData();
+            } catch (err) {
+                showToast(err.message, true);
+            }
+        }
+
+        // Delete Handler
+        async function deleteRecord(id, imageId) {
+            if (!confirm(`Are you sure you want to permanently delete this ${activeEntity} record?`)) return;
+
+            // Visual feedback: Highlight row red before deleting
+            const rowElem = document.querySelector(`tr[data-id="${id}"]`);
+            if (rowElem) {
+                rowElem.className = 'row-highlight-delete';
+                await new Promise(r => setTimeout(r, 400));
+            }
+
+            const payload = {
+                proc_name: activeEntity,
+                opr: 'DELETE',
+                condition: String(id)
+            };
+
+            if (activeEntity === 'product_image' && imageId) {
+                payload.table_values = { product_id: id, image_id: imageId };
+            }
+
+            try {
+                const res = await fetch('/api/data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await res.json();
+                if (!result.success) throw new Error(result.status || result.error);
+
+                showToast(`Record deleted successfully.`);
+                delete highlightMap[id];
+                if (activeEntity === 'category' || activeEntity === 'make_master') {
+                    await loadDropdownOptions();
+                }
+                loadData();
+            } catch (err) {
+                showToast(err.message, true);
+            }
+        }
+
+        const FIELD_ALIASES = {
+            product_id: ['product_id', 'productid', 'product id', 'p_id', 'pid'],
+            category_id: ['category_id', 'categoryid', 'category id', 'cat_id', 'catid'],
+            category_name: ['category_name', 'category name', 'categoryname', 'category_i', 'category', 'cat_name'],
+            m_id: ['m_id', 'mid', 'make_id', 'make id', 'make_master', 'makemaster', 'make'],
+            name: ['name', 'category_name_val'],
+            title: ['title', 'product_name', 'product name', 'productname', 'title_name'],
+            purity: ['purity', 'silver_purity', 'purity_grade'],
+            weight: ['weight', 'item_weight', 'wt', 'weight_gm'],
+            description: ['description', 'desc', 'details', 'item_description'],
+            price: ['price', 'unit_price', 'mrp', 'rate', 'product_price'],
+            discount: ['discount', 'disc', 'discount_percent', 'discount_%'],
+            quantity: ['quantity', 'qty', 'stock', 'stock_qty', 'count'],
+            ideal_for: ['ideal_for', 'idealfor', 'ideal for', 'gender', 'target_audience'],
+            packaging: ['packaging', 'package', 'pack_type', 'box_type'],
+            labour_cost: ['labour_cost', 'labourcost', 'labour cost', 'making_charge', 'making_cost'],
+            actual_cost: ['actual_cost', 'actualcost', 'actual cost', 'cost_price', 'cost'],
+            priority: ['priority', 'display_priority'],
+            image_id: ['image_id', 'imageid', 'image id', 'img_id'],
+            image_url: ['image_url', 'imageurl', 'image url', 'url', 'image', 'link']
+        };
+
+        function normalizeRowData(rawRow) {
+            const cleanObj = {};
+            Object.keys(rawRow).forEach(rawKey => {
+                const trimmedKey = rawKey.trim();
+                if (trimmedKey === 'Remark') return;
+
+                const lowerKey = trimmedKey.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                let matchedStandardField = null;
+
+                for (const [standardField, aliases] of Object.entries(FIELD_ALIASES)) {
+                    if (aliases.some(alias => lowerKey === alias.replace(/[^a-z0-9]/g, '_'))) {
+                        matchedStandardField = standardField;
+                        break;
+                    }
+                }
+
+                const finalKey = matchedStandardField || trimmedKey;
+                let val = rawRow[rawKey];
+                if (typeof val === 'string') val = val.trim();
+                if (val !== undefined && val !== null && val !== '') {
+                    cleanObj[finalKey] = (!isNaN(val) && val !== '') ? Number(val) : val;
+                }
+            });
+            return cleanObj;
+        }
+
+        function formatErrorRemark(rawError) {
+            if (!rawError) return 'Operation Failed';
+            let str = String(rawError);
+            return str.replace(/^ERROR\s*\[\d+\]:\s*/i, '').trim() || 'Operation Failed';
+        }
+
+        // File Import Pipeline with Direct In-Place Disk Save
+        async function triggerFileImport() {
+            if ('showOpenFilePicker' in window) {
+                try {
+                    const [fileHandle] = await window.showOpenFilePicker({
+                        types: [{
+                            description: 'Data Files (.csv, .xlsx, .xls, .docx)',
+                            accept: {
+                                'text/csv': ['.csv'],
+                                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+                                'application/vnd.ms-excel': ['.xls'],
+                                'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+                            }
+                        }],
+                        multiple: false
+                    });
+
+                    if (fileHandle) {
+                        const file = await fileHandle.getFile();
+                        await processAndSaveFileInPlace(file, fileHandle);
+                    }
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        showToast('File selection error: ' + err.message, true);
+                    }
+                }
+            } else {
+                document.getElementById('fileUploadInput').click();
+            }
+        }
+
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            await processAndSaveFileInPlace(file, null);
+            event.target.value = '';
+        }
+
+        async function processAndSaveFileInPlace(file, fileHandle = null) {
+            const fileName = file.name.toLowerCase();
+            showToast(`Parsing ${file.name}...`);
+
+            try {
+                let rows = [];
+
+                // 1. Parse CSV & Excel (.xlsx, .xls)
+                if (fileName.endsWith('.csv') || fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                    const data = await file.arrayBuffer();
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    rows = XLSX.utils.sheet_to_json(firstSheet);
+                }
+                // 2. Parse Word (.docx) Table
+                else if (fileName.endsWith('.docx')) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const result = await mammoth.convertToHtml({ arrayBuffer });
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = result.value;
+
+                    const table = tempDiv.querySelector('table');
+                    if (!table) throw new Error('No table found in Word document.');
+
+                    const trs = Array.from(table.querySelectorAll('tr'));
+                    if (trs.length < 2) throw new Error('Word table must have at least 1 header row and 1 data row.');
+
+                    const headers = Array.from(trs[0].querySelectorAll('th, td')).map(c => c.innerText.trim());
+
+                    for (let i = 1; i < trs.length; i++) {
+                        const cells = Array.from(trs[i].querySelectorAll('td')).map(c => c.innerText.trim());
+                        const obj = {};
+                        headers.forEach((h, idx) => {
+                            if (cells[idx] !== undefined && cells[idx] !== '') {
+                                obj[h] = !isNaN(cells[idx]) ? Number(cells[idx]) : cells[idx];
+                            }
+                        });
+                        rows.push(obj);
+                    }
+                }
+
+                if (rows.length === 0) throw new Error('No valid data rows found in file.');
+
+                const pkField = PK_MAP[activeEntity];
+                const modeSelect = document.getElementById('importModeSelect');
+                const selectedMode = (modeSelect && activeEntity === 'product') ? modeSelect.value : 'EDIT';
+
+                // 3. Refresh database records in real-time before checking existence
+                try {
+                    const freshRes = await fetch('/api/data', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ proc_name: activeEntity, opr: 'SELECT' })
+                    });
+                    const freshData = await freshRes.json();
+                    if (freshData.success && freshData.data) {
+                        currentRows = freshData.data;
+                    }
+                } catch (e) {
+                    console.error("Failed to refresh records prior to import:", e);
+                }
+
+                let inserted = 0;
+                let updated = 0;
+                let restocked = 0;
+                let failed = 0;
+
+                let newHighlightMap = {};
+
+                // 4. Intelligent Upsert / Restock Routing & Remark Annotation
+                for (const row of rows) {
+                    delete row.Remark; // Clear old Remark string from previous runs
+
+                    // Normalize headers & data values for DB payload
+                    const cleanTableValues = normalizeRowData(row);
+
+                    // Dual-Type Category Resolution (Numeric ID vs Text Name)
+                    if (activeEntity === 'product') {
+                        let rawCatVal = cleanTableValues['category_id'] !== undefined ? cleanTableValues['category_id'] : cleanTableValues['category_name'];
+                        if (rawCatVal === undefined) rawCatVal = cleanTableValues['category'];
+
+                        if (rawCatVal !== undefined && rawCatVal !== null && rawCatVal !== '') {
+                            if (!isNaN(rawCatVal) && String(rawCatVal).trim() !== '') {
+                                cleanTableValues['category_id'] = Number(rawCatVal);
+                                delete cleanTableValues['category_name'];
+                                delete cleanTableValues['category'];
+                            } else {
+                                const normKey = String(rawCatVal).trim().toLowerCase();
+                                if (categoryNameToIdMap[normKey] !== undefined) {
+                                    cleanTableValues['category_id'] = categoryNameToIdMap[normKey];
+                                    delete cleanTableValues['category_name'];
+                                    delete cleanTableValues['category'];
+                                } else if (categoryNameToIdMap[String(rawCatVal).trim()] !== undefined) {
+                                    cleanTableValues['category_id'] = categoryNameToIdMap[String(rawCatVal).trim()];
+                                    delete cleanTableValues['category_name'];
+                                    delete cleanTableValues['category'];
+                                } else {
+                                    failed++;
+                                    row['Remark'] = `Validation Error: Category '${rawCatVal}' does not exist in database.`;
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+
+                    // Ensure normalized key is present on row object
+                    Object.keys(cleanTableValues).forEach(k => {
+                        row[k] = cleanTableValues[k];
+                    });
+
+                    const idVal = cleanTableValues[pkField];
+
+                    // Check if ID exists in currently loaded database records
+                    const existsInDb = idVal !== undefined && idVal !== null && idVal !== '' &&
+                        currentRows.some(r => r[pkField] == idVal);
+
+                    let opr = 'ADD';
+                    let condition = null;
+
+                    if (existsInDb) {
+                        opr = selectedMode; // 'RESTOCK' (adds quantity) or 'EDIT' (overwrites fields)
+                        condition = String(idVal);
+                    } else {
+                        opr = 'ADD';
+                    }
+
+                    const payload = {
+                        proc_name: activeEntity,
+                        opr: opr,
+                        table_values: cleanTableValues,
+                        condition: condition
+                    };
+
+                    try {
+                        const res = await fetch('/api/data', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const resData = await res.json();
+                        if (resData.success) {
+                            let targetId = idVal;
+                            if (!targetId && resData.data && resData.data.length > 0) {
+                                const firstObj = resData.data[0];
+                                targetId = firstObj.NewProductId || firstObj.NewCategoryId || firstObj.NewImageId || firstObj.NewMId || firstObj[Object.keys(firstObj)[0]];
+                            }
+
+                            if (targetId && (row[pkField] === undefined || row[pkField] === null || row[pkField] === '')) {
+                                row[pkField] = targetId;
+                            }
+
+                            if (!existsInDb) {
+                                inserted++;
+                                row['Remark'] = 'Added';
+                                if (targetId) newHighlightMap[targetId] = 'add';
+                            } else if (opr === 'RESTOCK') {
+                                restocked++;
+                                row['Remark'] = 'Restocked';
+                                if (targetId) newHighlightMap[targetId] = 'restock';
+                            } else {
+                                updated++;
+                                row['Remark'] = 'Edited';
+                                if (targetId) newHighlightMap[targetId] = 'edit';
+                            }
+                        } else {
+                            // If ADD failed because record already exists, fallback to EDIT / RESTOCK
+                            if (opr === 'ADD' && resData.status && resData.status.includes('already exists') && idVal) {
+                                const retryPayload = {
+                                    proc_name: activeEntity,
+                                    opr: selectedMode,
+                                    table_values: cleanTableValues,
+                                    condition: String(idVal)
+                                };
+                                const retryRes = await fetch('/api/data', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(retryPayload)
+                                });
+                                const retryData = await retryRes.json();
+                                if (retryData.success) {
+                                    if (selectedMode === 'RESTOCK') {
+                                        restocked++;
+                                        row['Remark'] = 'Restocked';
+                                        if (idVal) newHighlightMap[idVal] = 'restock';
+                                    } else {
+                                        updated++;
+                                        row['Remark'] = 'Edited';
+                                        if (idVal) newHighlightMap[idVal] = 'edit';
+                                    }
+                                } else {
+                                    failed++;
+                                    const errorMsg = formatErrorRemark(retryData.status || retryData.error);
+                                    row['Remark'] = errorMsg;
+                                }
+                            } else {
+                                failed++;
+                                const errorMsg = formatErrorRemark(resData.status || resData.error);
+                                row['Remark'] = errorMsg;
+                                console.error(`Row Failed (${JSON.stringify(row)}):`, errorMsg);
+                            }
+                        }
+                    } catch (rowErr) {
+                        failed++;
+                        row['Remark'] = rowErr.message || 'Processing Error';
+                        console.error(`Row Exception:`, rowErr);
+                    }
+                }
+
+                highlightMap = newHighlightMap;
+
+                // Reorder keys so 'Remark' is placed cleanly as the final column
+                const formattedRows = rows.map(r => {
+                    const remarkVal = r.Remark;
+                    const newObj = {};
+                    Object.keys(r).forEach(k => {
+                        if (k !== 'Remark') newObj[k] = r[k];
+                    });
+                    if (remarkVal !== undefined) newObj['Remark'] = remarkVal;
+                    return newObj;
+                });
+
+                // 5. In-Place Direct Save back to Original File on Disk
+                if (fileHandle && formattedRows.length > 0) {
+                    try {
+                        const ws = XLSX.utils.json_to_sheet(formattedRows);
+                        const writable = await fileHandle.createWritable();
+
+                        if (fileName.endsWith('.csv')) {
+                            const csvOutput = XLSX.utils.sheet_to_csv(ws);
+                            await writable.write(csvOutput);
+                        } else {
+                            const wb = XLSX.utils.book_new();
+                            XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+                            const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                            await writable.write(excelBuffer);
+                        }
+                        await writable.close();
+                    } catch (writeErr) {
+                        console.error('Failed to write directly back to file:', writeErr);
+                    }
+                }
+
+                const summary = [
+                    inserted > 0 ? `Added: ${inserted}` : null,
+                    updated > 0 ? `Edited: ${updated}` : null,
+                    restocked > 0 ? `Restocked: ${restocked}` : null,
+                    failed > 0 ? `Errors: ${failed}` : null
+                ].filter(Boolean).join(', ');
+
+                showToast(`Import Completed & Saved to ${file.name}! (${summary || 'No changes made'})`);
+                loadData();
+
+            } catch (err) {
+                showToast('Import Error: ' + err.message, true);
+            }
+        }
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.className = `toast show ${isError ? 'toast-error' : 'toast-success'}`;
+            toast.innerHTML = `<i class="ph-bold ${isError ? 'ph-warning-circle' : 'ph-check-circle'}"></i> <span>${msg}</span>`;
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3500);
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            const themeIcon = document.getElementById('themeIcon');
+            const themeToggleText = document.getElementById('themeToggleText');
+            const sidebarThemeIcon = document.getElementById('sidebarThemeIcon');
+
+            if (theme === 'dark') {
+                if (themeIcon) themeIcon.className = 'ph-bold ph-sun';
+                if (themeToggleText) themeToggleText.innerText = 'Light Mode';
+                if (sidebarThemeIcon) sidebarThemeIcon.className = 'ph-bold ph-sun';
+            } else {
+                if (themeIcon) themeIcon.className = 'ph-bold ph-moon';
+                if (themeToggleText) themeToggleText.innerText = 'Dark Mode';
+                if (sidebarThemeIcon) sidebarThemeIcon.className = 'ph-bold ph-moon';
+            }
+        }
+
+        // Initialize theme and entity before loading data
+        initTheme();
+        initActiveEntity();
+
+        // Initial load
+        loadData();
+    </script>
+</body>
+
+</html>

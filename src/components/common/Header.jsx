@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MegaMenu from './MegaMenu';
 import { useAuth } from '../../context/AuthContext';
-import { Search, Heart, ShoppingBag, User, Menu, Sparkles, ChevronDown, LogOut, Building2, Shield } from 'lucide-react';
+import { Search, Heart, ShoppingBag, User, Menu, Sparkles, ChevronDown, LogOut, Building2, Shield, Store, MapPin } from 'lucide-react';
+import StoresModal from './StoresModal';
 
 export default function Header({
   cartCount,
@@ -21,6 +22,7 @@ export default function Header({
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isStoresModalOpen, setIsStoresModalOpen] = useState(false);
 
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
@@ -391,14 +393,24 @@ export default function Header({
 
           </nav>
 
-          {/* Right Action Icons (User, Search, Cart) */}
-          <div className="flex items-center space-x-4 sm:space-x-5">
+          {/* Right Action Icons (Stores, Account, Wishlist, Cart, Search) */}
+          <div className="flex items-center space-x-3 sm:space-x-5">
+            {/* Stores Locator Trigger */}
+            <button
+              onClick={() => setIsStoresModalOpen(true)}
+              className="p-1.5 sm:p-2 text-[#600814] hover:opacity-75 transition-opacity relative flex items-center space-x-1 cursor-pointer"
+              title="Flagship Stores"
+            >
+              <Store className="w-5 h-5 stroke-[1.8]" />
+              <span className="hidden xl:inline-block text-xs font-bold uppercase tracking-wider text-[#600814]">Stores</span>
+            </button>
+
             {/* User Account & Profile Dropdown */}
             <div className="relative">
               {isAuthenticated ? (
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 p-1.5 rounded-full hover:bg-silver-100 transition-colors focus:outline-none"
+                  className="flex items-center space-x-1.5 p-1 rounded-full hover:bg-silver-100 transition-colors focus:outline-none cursor-pointer"
                   title={user.fullName || 'User Profile'}
                 >
                   <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#600814] to-[#AA820A] text-white font-bold text-xs flex items-center justify-center shadow-xs">
@@ -413,11 +425,11 @@ export default function Header({
               ) : (
                 <button
                   onClick={() => navigate('/login')}
-                  className="p-2 text-[#600814] hover:opacity-75 transition-opacity relative flex items-center space-x-1"
+                  className="p-1.5 sm:p-2 text-[#600814] hover:opacity-75 transition-opacity relative flex items-center space-x-1 cursor-pointer"
                   title="Sign In / Register"
                 >
                   <User className="w-5 h-5 stroke-[1.8]" />
-                  <span className="hidden sm:inline-block text-xs font-bold uppercase tracking-wider text-[#600814]">Sign In</span>
+                  <span className="hidden sm:inline-block text-xs font-bold uppercase tracking-wider text-[#600814]">Account</span>
                 </button>
               )}
 
@@ -437,7 +449,7 @@ export default function Header({
                   <div className="space-y-1">
                     {isAdmin && (
                       <a
-                        href="http://localhost:5000"
+                        href="http://localhost:5000/admin"
                         target="_blank"
                         rel="noreferrer"
                         className="w-full text-left px-3 py-2 text-xs font-bold text-[#600814] hover:bg-silver-50 rounded-xl flex items-center space-x-2 transition-colors"
@@ -463,27 +475,41 @@ export default function Header({
               )}
             </div>
 
-            {/* Search Trigger */}
+            {/* Wishlist Trigger with Live Badge */}
             <button
-              onClick={onOpenSearch}
-              className="p-2 text-[#600814] hover:opacity-75 transition-opacity relative group"
-              title="Search products"
+              onClick={onOpenWishlist}
+              className="p-1.5 sm:p-2 text-[#600814] hover:opacity-75 transition-opacity relative group cursor-pointer"
+              title="Saved Wishlist"
             >
-              <Search className="w-5 h-5 stroke-[1.8] group-hover:scale-110 transition-transform" />
+              <Heart className="w-5 h-5 stroke-[1.8] group-hover:scale-110 transition-transform" />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#600814] text-white font-bold text-[10px] rounded-full flex items-center justify-center shadow-xs">
+                  {wishlistCount}
+                </span>
+              )}
             </button>
 
-            {/* Shopping Bag / Cart */}
+            {/* Shopping Bag / Cart Trigger with Live Badge */}
             <button
               onClick={onOpenCart}
-              className="p-2 text-[#600814] hover:opacity-75 transition-opacity relative group"
+              className="p-1.5 sm:p-2 text-[#600814] hover:opacity-75 transition-opacity relative group cursor-pointer"
               title="Shopping Cart"
             >
               <ShoppingBag className="w-5 h-5 stroke-[1.8] group-hover:scale-110 transition-transform" />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#600814] text-white font-bold text-[10px] rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#600814] text-white font-bold text-[10px] rounded-full flex items-center justify-center shadow-xs">
                   {cartCount}
                 </span>
               )}
+            </button>
+
+            {/* Search Trigger */}
+            <button
+              onClick={onOpenSearch}
+              className="p-1.5 sm:p-2 text-[#600814] hover:opacity-75 transition-opacity relative group cursor-pointer"
+              title="Search products"
+            >
+              <Search className="w-5 h-5 stroke-[1.8] group-hover:scale-110 transition-transform" />
             </button>
           </div>
         </div>
@@ -498,6 +524,12 @@ export default function Header({
           onClose={() => setIsMegaMenuOpen(false)}
         />
       )}
+
+      {/* Flagship Stores Modal */}
+      <StoresModal
+        isOpen={isStoresModalOpen}
+        onClose={() => setIsStoresModalOpen(false)}
+      />
     </header>
   );
 }
