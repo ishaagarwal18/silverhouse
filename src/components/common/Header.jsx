@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MegaMenu from './MegaMenu';
-import { Search, Heart, ShoppingBag, User, Menu, Sparkles, ChevronDown } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { Search, Heart, ShoppingBag, User, Menu, Sparkles, ChevronDown, LogOut, Building2, Shield } from 'lucide-react';
 
 export default function Header({
   cartCount,
@@ -18,6 +20,10 @@ export default function Header({
 }) {
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const navigate = useNavigate();
 
   const DROPDOWNS = {
     jewellery: [
@@ -387,13 +393,75 @@ export default function Header({
 
           {/* Right Action Icons (User, Search, Cart) */}
           <div className="flex items-center space-x-4 sm:space-x-5">
-            {/* User Account */}
-            <button
-              className="p-2 text-[#600814] hover:opacity-75 transition-opacity relative"
-              title="User Account"
-            >
-              <User className="w-5 h-5 stroke-[1.8]" />
-            </button>
+            {/* User Account & Profile Dropdown */}
+            <div className="relative">
+              {isAuthenticated ? (
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center space-x-2 p-1.5 rounded-full hover:bg-silver-100 transition-colors focus:outline-none"
+                  title={user.fullName || 'User Profile'}
+                >
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#600814] to-[#AA820A] text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                    {user.fullName ? user.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'SH'}
+                  </div>
+                  {isAdmin && (
+                    <span className="hidden xl:inline-block text-[10px] font-bold bg-[#D4AF37] text-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      ADMIN
+                    </span>
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate('/login')}
+                  className="p-2 text-[#600814] hover:opacity-75 transition-opacity relative flex items-center space-x-1"
+                  title="Sign In / Register"
+                >
+                  <User className="w-5 h-5 stroke-[1.8]" />
+                  <span className="hidden sm:inline-block text-xs font-bold uppercase tracking-wider text-[#600814]">Sign In</span>
+                </button>
+              )}
+
+              {/* User Dropdown Menu */}
+              {isAuthenticated && isUserMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-silver-200 p-4 z-50 animate-in fade-in slide-in-from-top-2 text-left">
+                  <div className="pb-3 border-b border-silver-100 mb-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-sm text-[#1A1A1A] truncate">{user.fullName || 'User'}</h4>
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${isAdmin ? 'bg-[#D4AF37] text-black' : 'bg-silver-100 text-silver-700'}`}>
+                        {user.role || 'CUSTOMER'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-silver-500 truncate mt-0.5">{user.email}</p>
+                  </div>
+
+                  <div className="space-y-1">
+                    {isAdmin && (
+                      <a
+                        href="http://localhost:5000"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full text-left px-3 py-2 text-xs font-bold text-[#600814] hover:bg-silver-50 rounded-xl flex items-center space-x-2 transition-colors"
+                      >
+                        <Building2 className="w-4 h-4 text-[#D4AF37]" />
+                        <span>Open Admin Studio</span>
+                      </a>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        logout();
+                        setIsUserMenuOpen(false);
+                        navigate('/login');
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl flex items-center space-x-2 transition-colors cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Log Out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Search Trigger */}
             <button

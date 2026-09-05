@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 const { sql, poolPromise } = require('./db');
 require('dotenv').config();
 
@@ -8,7 +10,156 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const fs = require('fs');
+// Ensure public/uploads directory exists
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Configure multer storage for uploaded images
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadsDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname) || '.jpg';
+        cb(null, 'img-' + uniqueSuffix + ext);
+    }
+});
+const upload = multer({
+    storage,
+    limits: { fileSize: 10 * 1024 * 1024 }
+});
+
+// File upload endpoint for Chrome / Web browser uploads
+app.post('/api/upload', upload.single('imageFile'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, error: 'No image file uploaded.' });
+        }
+        const imageUrl = `/uploads/${req.file.filename}`;
+        return res.status(200).json({
+            success: true,
+            imageUrl: imageUrl
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// AUTHENTICATION ENDPOINTS (Login, Register, Session Verification)
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        if (!email || !password) {
+            return res.status(400).json({ success: false, error: 'Email and password are required.' });
+        }
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('email', sql.NVarChar(150), email.trim())
+            .query('SELECT user_id, full_name, email, phone, password_hash, role FROM dbo.[user] WHERE LOWER(email) = LOWER(@email)');
+
+        if (!result.recordset || result.recordset.length === 0) {
+            return res.status(401).json({ success: false, error: 'Invalid email or password.' });
+        }
+
+        const user = result.recordset[0];
+        if (password.trim() !== user.password_hash.trim()) {
+            return res.status(401).json({ success: false, error: 'Invalid email or password.' });
+        }
+
+        const isAdmin = user.role.toUpperCase() === 'ADMIN';
+        const userObj = {
+            userId: user.user_id,
+            fullName: user.full_name,
+            email: user.email,
+            phone: user.phone || '',
+            role: user.role.toUpperCase()
+        };
+
+        const token = Buffer.from(JSON.stringify(userObj)).toString('base64');
+
+        return res.status(200).json({
+            success: true,
+            message: 'Login successful',
+            token: token,
+            user: userObj,
+            role: userObj.role,
+            isAdmin: isAdmin,
+            redirectUrl: isAdmin ? 'http://localhost:5000' : '/'
+        });
+    } catch (err) {
+        console.error('[Auth Error]:', err.message);
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        const { fullName, email, phone, password } = req.body;
+        if (!fullName || !email || !password) {
+            return res.status(400).json({ success: false, error: 'Full name, email, and password are required.' });
+        }
+
+        const pool = await poolPromise;
+        const checkResult = await pool.request()
+            .input('email', sql.NVarChar(150), email.trim())
+            .query('SELECT user_id FROM dbo.[user] WHERE LOWER(email) = LOWER(@email)');
+
+        if (checkResult.recordset && checkResult.recordset.length > 0) {
+            return res.status(400).json({ success: false, error: 'An account with this email already exists.' });
+        }
+
+        const insertResult = await pool.request()
+            .input('full_name', sql.NVarChar(100), fullName.trim())
+            .input('email', sql.NVarChar(150), email.trim())
+            .input('phone', sql.NVarChar(20), phone ? phone.trim() : null)
+            .input('password_hash', sql.NVarChar(255), password.trim())
+            .input('role', sql.NVarChar(20), 'CUSTOMER')
+            .query('INSERT INTO dbo.[user] (full_name, email, phone, password_hash, role) OUTPUT INSERTED.user_id VALUES (@full_name, @email, @phone, @password_hash, @role)');
+
+        const newUserId = insertResult.recordset[0].user_id;
+
+        const userObj = {
+            userId: newUserId,
+            fullName: fullName.trim(),
+            email: email.trim(),
+            phone: phone ? phone.trim() : '',
+            role: 'CUSTOMER'
+        };
+
+        const token = Buffer.from(JSON.stringify(userObj)).toString('base64');
+
+        return res.status(201).json({
+            success: true,
+            message: 'Registration successful',
+            token: token,
+            user: userObj,
+            role: 'CUSTOMER',
+            isAdmin: false,
+            redirectUrl: '/'
+        });
+    } catch (err) {
+        console.error('[Register Error]:', err.message);
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.get('/api/auth/me', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ success: false, error: 'No token provided' });
+        }
+        const token = authHeader.substring(7);
+        const decoded = JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
+        return res.status(200).json({ success: true, user: decoded });
+    } catch {
+        return res.status(401).json({ success: false, error: 'Invalid token' });
+    }
+});
 
 // 1. Single unified endpoint handling all operations from forms & API
 app.post('/api/data', async (req, res) => {
@@ -50,7 +201,10 @@ app.post('/api/data', async (req, res) => {
                     data = data.map(item => {
                         if (item.images_json) {
                             try {
-                                item.images = JSON.parse(item.images_json);
+                                const parsed = JSON.parse(item.images_json);
+                                item.images = Array.isArray(parsed) 
+                                    ? parsed.map(img => typeof img === 'string' ? img : (img.image_url || img.url || '')) 
+                                    : [];
                             } catch (e) {
                                 item.images = [];
                             }
@@ -111,7 +265,10 @@ app.post('/api/data', async (req, res) => {
             data = data.map(item => {
                 if (item.images_json) {
                     try {
-                        item.images = JSON.parse(item.images_json);
+                        const parsed = JSON.parse(item.images_json);
+                        item.images = Array.isArray(parsed) 
+                            ? parsed.map(img => typeof img === 'string' ? img : (img.image_url || img.url || '')) 
+                            : [];
                     } catch (e) {
                         item.images = [];
                     }

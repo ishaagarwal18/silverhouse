@@ -127,13 +127,9 @@ export default function ProductDetailPage({
             {/* Main High-Res Viewer */}
             <div className="relative aspect-square rounded-2xl overflow-hidden bg-white border border-silver-200 silver-card-shadow group">
               <img
-                src={Array.isArray(currentProduct.images) && currentProduct.images[selectedImage] ? currentProduct.images[selectedImage] : (currentProduct.images && currentProduct.images[0] ? currentProduct.images[0] : 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80')}
+                src={Array.isArray(currentProduct.images) && currentProduct.images[selectedImage] ? currentProduct.images[selectedImage] : (currentProduct.images && currentProduct.images[0] ? currentProduct.images[0] : '')}
                 alt={currentProduct.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80';
-                }}
               />
 
               {/* Purity & Discount Badges */}

@@ -1,7 +1,7 @@
 import { PRODUCTS } from '../data/products';
 
-// Base API URL (proxied via Vite or direct fallback to backend port 5000)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Base API URL (proxied via Vite server to backend port 5000)
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 /**
  * Normalizes raw backend product object to frontend component interface.
@@ -25,7 +25,7 @@ export function normalizeProduct(rawItem) {
   }
 
   if (images.length === 0) {
-    images = ["https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80"];
+    images = [""];
   }
 
   const rawPrice = Number(rawItem.price) || Number(rawItem.original_price) || 1000;

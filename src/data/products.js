@@ -138,7 +138,7 @@ export const PRODUCTS = [
     priority: 100,
     isBestSeller: true,
     images: [
-      "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80"
+      "/uploads/309_radha_krishna_statue.jpg"
     ],
     shortDesc: "Divine handcrafted silver idols with antique polish for puja temple.",
     specs: {
@@ -169,7 +169,7 @@ export const PRODUCTS = [
     actual_cost: 1750,
     priority: 80,
     images: [
-      "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80"
+      "/uploads/310_cz_solitaire_ring.jpg"
     ],
     shortDesc: "Sparkling cubic zirconia studded silver band with floral crown.",
     specs: {
@@ -200,7 +200,7 @@ export const PRODUCTS = [
     actual_cost: 7200,
     priority: 70,
     images: [
-      "https://images.unsplash.com/photo-1611591475285-a29ae287f480?auto=format&fit=crop&w=600&q=80"
+      "/uploads/313_oxidised_broad_kada.jpg"
     ],
     shortDesc: "Traditional royal handcrafted openable broad silver kada.",
     specs: {
@@ -231,7 +231,7 @@ export const PRODUCTS = [
     actual_cost: 2300,
     priority: 60,
     images: [
-      "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=600&q=80"
+      "/uploads/314_trishul_damru_pendant.jpg"
     ],
     shortDesc: "Modern laser cut devotional lotus pendant with sleek link chain.",
     specs: {
@@ -262,7 +262,7 @@ export const PRODUCTS = [
     actual_cost: 4800,
     priority: 50,
     images: [
-      "https://images.unsplash.com/photo-1611591475285-a29ae287f480?auto=format&fit=crop&w=600&q=80"
+      "/uploads/316_royal_men_silver_kada.jpg"
     ],
     shortDesc: "Solid high-polish masculine link bracelet with secure box lock.",
     specs: {
@@ -293,7 +293,7 @@ export const PRODUCTS = [
     actual_cost: 6600,
     priority: 40,
     images: [
-      "https://images.unsplash.com/photo-1611591475285-a29ae287f480?auto=format&fit=crop&w=600&q=80"
+      "/uploads/318_antique_ghungroo_payal.jpg"
     ],
     shortDesc: "Traditional double-layer chiming ankle bells with oxidised antique finish.",
     specs: {
@@ -324,7 +324,7 @@ export const PRODUCTS = [
     actual_cost: 880,
     priority: 30,
     images: [
-      "https://images.unsplash.com/photo-1611591475285-a29ae287f480?auto=format&fit=crop&w=600&q=80"
+      "/uploads/319_baby_silver_kada.jpg"
     ],
     shortDesc: "Protective silver charm nazariya pair with adjustable smooth lock.",
     specs: {
@@ -355,7 +355,7 @@ export const PRODUCTS = [
     actual_cost: 1520,
     priority: 20,
     images: [
-      "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80"
+      "/uploads/320_pure_silver_lakshmi_bar.jpg"
     ],
     shortDesc: "Government certified tamper-proof blister card investment bullion coin.",
     specs: {
@@ -383,7 +383,7 @@ export const PRODUCTS = [
     ideal_for: "ALL",
     packaging: "Royal Velvet Wooden Box",
     isBestSeller: true,
-    images: ["https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=600&q=80"]
+    images: ["/uploads/309_radha_krishna_statue.jpg"]
   },
   {
     id: "310",
@@ -402,7 +402,7 @@ export const PRODUCTS = [
     quantity: 30,
     ideal_for: "Women",
     packaging: "Premium Ring Box",
-    images: ["https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80"]
+    images: ["/uploads/310_cz_solitaire_ring.jpg"]
   },
   {
     id: "311",
@@ -421,7 +421,7 @@ export const PRODUCTS = [
     quantity: 20,
     ideal_for: "Women",
     packaging: "Velvet Pouch",
-    images: ["https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=600&q=80"]
+    images: ["/uploads/311_peacock_silver_ring.jpg"]
   },
   {
     id: "312",
@@ -441,7 +441,7 @@ export const PRODUCTS = [
     ideal_for: "Women",
     packaging: "Hard Velvet Case",
     isBestSeller: true,
-    images: ["https://images.unsplash.com/photo-1611591475817-21a44e644675?auto=format&fit=crop&w=600&q=80"]
+    images: ["/uploads/312_temple_silver_bangle.jpg"]
   },
   {
     id: "313",
@@ -460,7 +460,7 @@ export const PRODUCTS = [
     quantity: 12,
     ideal_for: "Women",
     packaging: "Royal Box",
-    images: ["https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=600&q=80"]
+    images: ["/uploads/313_oxidised_broad_kada.jpg"]
   },
   {
     id: "314",
@@ -480,7 +480,7 @@ export const PRODUCTS = [
     ideal_for: "ALL",
     packaging: "Sleek Gift Box",
     isBestSeller: true,
-    images: ["https://images.unsplash.com/photo-1635767798638-3e25273a8236?auto=format&fit=crop&w=600&q=80"]
+    images: ["/uploads/314_trishul_damru_pendant.jpg"]
   },
   {
     id: "315",
@@ -499,7 +499,7 @@ export const PRODUCTS = [
     quantity: 15,
     ideal_for: "Women",
     packaging: "Sleek Pouch",
-    images: ["https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=600&q=80"]
+    images: ["/uploads/315_tree_of_life_pendant.jpg"]
   },
   {
     id: "316",
@@ -519,7 +519,7 @@ export const PRODUCTS = [
     ideal_for: "Men",
     packaging: "Leatherette Box",
     isBestSeller: true,
-    images: ["https://images.unsplash.com/photo-1620656798579-1984d9e87dfa?auto=format&fit=crop&w=600&q=80"]
+    images: ["/uploads/316_royal_men_silver_kada.jpg"]
   },
   {
     id: "317",
@@ -538,7 +538,7 @@ export const PRODUCTS = [
     quantity: 10,
     ideal_for: "Men",
     packaging: "Leatherette Box",
-    images: ["https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=600&q=80"]
+    images: ["/uploads/317_heavy_cuban_chain.jpg"]
   },
   {
     id: "318",
@@ -557,7 +557,7 @@ export const PRODUCTS = [
     quantity: 8,
     ideal_for: "Women",
     packaging: "Velvet Case",
-    images: ["https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=600&q=80"]
+    images: ["/uploads/318_antique_ghungroo_payal.jpg"]
   },
   {
     id: "319",
@@ -576,7 +576,7 @@ export const PRODUCTS = [
     quantity: 22,
     ideal_for: "Kids",
     packaging: "Gift Pouch",
-    images: ["https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80"]
+    images: ["/uploads/319_baby_silver_kada.jpg"]
   },
   {
     id: "320",
@@ -596,7 +596,7 @@ export const PRODUCTS = [
     ideal_for: "ALL",
     packaging: "Tamper-Evident Blister Card",
     isBestSeller: true,
-    images: ["https://images.unsplash.com/photo-1611591475817-21a44e644675?auto=format&fit=crop&w=600&q=80"]
+    images: ["/uploads/320_pure_silver_lakshmi_bar.jpg"]
   }
 ];
 

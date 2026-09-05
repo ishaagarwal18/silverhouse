@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import HomePage from '../components/home/HomePage';
 import ProductListingPage from '../components/plp/ProductListingPage';
 import ProductDetailPage from '../components/pdp/ProductDetailPage';
+import AuthPage from '../components/auth/AuthPage';
 
 export default function AppRouter({
   products,
@@ -45,6 +46,10 @@ export default function AppRouter({
 
   return (
     <Routes>
+      {/* Login & Register Auth Route */}
+      <Route path="/login" element={<AuthPage onTriggerToast={onTriggerToast} />} />
+      <Route path="/register" element={<AuthPage onTriggerToast={onTriggerToast} />} />
+
       {/* Home Page */}
       <Route
         path="/"
